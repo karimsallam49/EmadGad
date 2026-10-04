@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="135" height="40" viewBox="0 0 135 40">
+  <defs>
+    <clipPath id="gp-tri">
+      <path d="M12.4 7.7 L33.6 19 Q36 20 33.6 21 L12.4 32.3 Q10.5 33.2 10.5 30.7 L10.5 9.3 Q10.5 6.8 12.4 7.7 Z"/>
+    </clipPath>
+  </defs>
+  <rect x="0.25" y="0.25" width="134.5" height="39.5" rx="7" fill="#000000" stroke="#A6A6A6" stroke-width="0.5"/>
+  <g clip-path="url(#gp-tri)">
+    <path fill="#00A0FF" d="M10 7 L24.5 20 L10 33 Z"/>
+    <path fill="#00F076" d="M10 7 L36 20 L24.5 20 Z"/>
+    <path fill="#FFE000" d="M10 33 L36 20 L24.5 20 Z"/>
+    <path fill="#FF3A44" d="M24.5 20 L31.5 16.6 L36 20 L31.5 23.4 Z"/>
+  </g>
+  <text x="46" y="14.5" font-family="Helvetica, Arial, sans-serif" font-size="6.8" letter-spacing="0.8" fill="#FFFFFF">GET IT ON</text>
+  <text x="46" y="29.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF">Google Play</text>
+</svg>

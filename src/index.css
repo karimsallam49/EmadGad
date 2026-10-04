@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand: 246 199 68;
+    --brand-light: 253 243 208;
+    --ink: 25 25 25;
+    --ink-soft: 42 42 42;
+    --ink-mute: 92 92 92;
+    --paper: 250 249 246;
+
+    --background: 45 33% 97%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 45 91% 62%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 45 91% 62%;
+    --muted: 40 10% 94%;
+    --muted-foreground: 0 0% 36%;
+    --accent: 45 91% 62%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 8% 88%;
+    --input: 40 8% 85%;
+    --ring: 45 91% 55%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --brand: 246 199 68;
+    --brand-light: 58 46 16;
+    --ink: 238 236 230;
+    --ink-soft: 208 205 197;
+    --ink-mute: 163 160 152;
+    --paper: 14 14 14;
+
+    --background: 0 0% 6%;
+    --foreground: 40 9% 92%;
+    --card: 0 0% 11%;
+    --card-foreground: 40 9% 92%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 40 9% 92%;
+    --primary: 45 91% 62%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 45 91% 62%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 17%;
+    --accent-foreground: 40 9% 92%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 24%;
+    --ring: 45 91% 55%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 40 9% 92%;
+    --sidebar-primary: 45 91% 62%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 40 9% 92%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 45 91% 55%;
+  }
+}
+
+/* White surfaces become dark cards in dark mode */
+.dark .bg-white {
+  background-color: #1c1c1c;
+}
+.dark .bg-white\/95 {
+  background-color: rgb(18 18 18 / 0.95);
+}
+.dark .bg-white\/90 {
+  background-color: rgb(18 18 18 / 0.9);
+}
+/* App-level styles are handled via Tailwind and index.css */
+
+/* Instagram embeds: force the media to fill its container width */
+.instagram-media {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased overflow-x-hidden;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: #f6c744;
+    color: #191919;
+  }
+  /* Latin numerals stay LTR inside RTL text */
+  .ltr {
+    direction: ltr;
+    unicode-bidi: embed;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes loyalty-shine {
+  0% {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  55%,
+  100% {
+    transform: translateX(480%) skewX(-18deg);
+  }
+}
+
+@keyframes marquee-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(50%);
+  }
+}
+
+@keyframes marquee-ltr {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-rtl {
+  animation: marquee-rtl 30s linear infinite;
+}
+
+.animate-loyalty-shine {
+  animation: loyalty-shine 4.5s ease-in-out infinite;
+}
+
+[dir='ltr'] .animate-marquee-rtl {
+  animation-name: marquee-ltr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-rtl,
+  .animate-loyalty-shine {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
