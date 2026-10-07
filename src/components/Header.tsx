@@ -14,7 +14,7 @@ const NAV = [
   { label: 'الرئيسية', to: '/' },
   { label: 'الإطارات', to: '/tires' },
   { label: 'البطاريات', to: '/batteries' },
-  { label: 'خدمات السيارات', to: '/services' },
+  { label: 'احجز خدمة', to: '/booking' },
   { label: 'الأقسام', to: '/taxonomy' },
   { label: 'فروعنا', to: '/branches' },
 ];

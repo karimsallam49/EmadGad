@@ -410,7 +410,6 @@ export default function CheckoutPage() {
     <div className="bg-paper min-h-[calc(100vh-80px)] w-full overflow-x-hidden">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 lg:py-14">
         <h1 className="text-3xl sm:text-4xl font-black text-ink">{t('إتمام الطلب')}</h1>
-        <p className="mt-2 text-lg font-semibold text-ink-mute">{t('الأسعار والخصومات بتحسب على السيرفر — هتشوف الإجمالي النهائي بعد التأكيد.')}</p>
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-6 items-start">
           <div className="space-y-6 w-full min-w-0">
@@ -683,9 +682,6 @@ export default function CheckoutPage() {
                 {!user ? t('التسجيل مطلوب عشان ننشئ الطلب على حسابك') : mode === 'shipping' ? t('كمل بياناتك وعنوان الشحن عشان تأكد الطلب') : t('كمل البيانات والميعاد عشان تأكد الطلب')}
               </p>
             )}
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs font-bold text-ink-mute">
-              <BadgeCheck className="h-4 w-4" /> {t('بنكلمك للتأكيد قبل أي خصم أو تركيب')}
-            </p>
           </aside>
         </div>
       </div>

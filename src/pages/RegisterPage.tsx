@@ -4,6 +4,7 @@ import { useAuth } from '@/auth';
 import { useLang } from '@/i18n';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -118,6 +119,12 @@ export default function RegisterPage() {
           <Button type="submit" disabled={loading} className="w-full h-12 text-base font-black">
             {loading ? t('جاري التسجيل...') : t('سجّل')}
           </Button>
+          <div className="flex items-center gap-3 text-xs font-black text-ink-mute">
+            <span className="h-px flex-1 bg-border" />
+            {t('أو')}
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <GoogleAuthButton />
           <p className="text-center text-sm font-bold text-ink-mute">
             {t('عندك حساب؟')}{' '}
             <Link to="/login" className="font-black text-ink underline hover:text-brand">

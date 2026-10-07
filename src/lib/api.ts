@@ -86,6 +86,7 @@ export async function apiRequest<T = unknown>(
       message =
         parsed.message ||
         parsed.msg ||
+        parsed.error ||
         (Array.isArray(parsed.messages) ? parsed.messages.join(', ') : undefined) ||
         text;
     } catch {
@@ -105,9 +106,23 @@ export async function apiRequest<T = unknown>(
 
   try {
     const json = (await res.json()) as DTO.ApiResponse<T>;
+    // Some endpoints wrap failures in HTTP 200: { success: false, error: "..." }
+    if (json && (json as { success?: boolean }).success === false) {
+      const j = json as { message?: string; msg?: string; error?: string; messages?: string[] };
+      const message =
+        j.message || j.msg || j.error ||
+        (Array.isArray(j.messages) ? j.messages.join(', ') : undefined) ||
+        'Request failed';
+      apiLog({ phase: 'http-error', method, url, status: res.status, ms, detail: String(message).slice(0, 300) });
+      const err = new Error(String(message)) as ApiError;
+      err.status = res.status;
+      err.statusText = res.statusText;
+      throw err;
+    }
     apiLog({ phase: 'ok', method, url, status: res.status, ms });
     return json;
   } catch (e) {
+    if ((e as ApiError).status !== undefined) throw e;
     const detail = e instanceof Error ? e.message : String(e);
     apiLog({ phase: 'parse-error', method, url, status: res.status, ms, detail });
     throw e;
@@ -134,8 +149,79 @@ export async function checkPhone(body: { mobile: string }) {
   return api.post<DTO.CheckPhoneResultModel>(ENDPOINTS.auth.checkPhone, body);
 }
 
-export async function socialLogin(body: unknown) {
-  return api.post<DTO.SocialAuthResponseModel>(ENDPOINTS.auth.social, body);
+// ==================== Social auth (Google/Apple) ====================
+
+export interface SocialLoginBody {
+  medium: 'google' | 'apple';
+  unique_id: string;
+  email?: string;
+  name?: string;
+  /** Google OAuth access token */
+  token?: string;
+  /** Apple-only fields */
+  authorization_code?: string;
+  identity_token?: string;
+}
+
+export async function socialLogin(body: SocialLoginBody) {
+  const res = await api.post<DTO.SocialAuthResponseModel>(ENDPOINTS.auth.socialLogin, body);
+  return (res as unknown as { data?: DTO.SocialAuthResponseModel }).data ?? (res as unknown as DTO.SocialAuthResponseModel);
+}
+
+/** Feature flag — whether phone binding requires OTP (defaults true on error) */
+export async function getOtpSetting() {
+  try {
+    const res = await api.get<{ enable_otp_for_social_login?: boolean } | unknown>(ENDPOINTS.auth.otpSetting);
+    const raw = (res as unknown as { data?: { enable_otp_for_social_login?: boolean } }).data;
+    return raw?.enable_otp_for_social_login ?? true;
+  } catch {
+    return true;
+  }
+}
+
+export interface SocialPhoneBody {
+  phone: string;
+  email?: string;
+  name?: string;
+  medium?: string;
+  unique_id?: string;
+  user_id?: number | null;
+  otp?: string;
+}
+
+export async function updateSocialMobile(body: SocialPhoneBody) {
+  const res = await api.post<DTO.SocialAuthResponseModel>(ENDPOINTS.auth.updateSocialMobile, body);
+  return (res as unknown as { data?: DTO.SocialAuthResponseModel }).data ?? (res as unknown as DTO.SocialAuthResponseModel);
+}
+
+export async function sendPhoneVerificationOtp(body: SocialPhoneBody) {
+  const res = await api.post<DTO.SocialAuthResponseModel>(ENDPOINTS.auth.sendPhoneVerificationOtp, body);
+  return (res as unknown as { data?: DTO.SocialAuthResponseModel }).data ?? (res as unknown as DTO.SocialAuthResponseModel);
+}
+
+export async function verifyPhoneAndSetMobile(body: SocialPhoneBody) {
+  const res = await api.post<DTO.SocialAuthResponseModel>(ENDPOINTS.auth.verifyPhoneAndSetMobile, body);
+  return (res as unknown as { data?: DTO.SocialAuthResponseModel }).data ?? (res as unknown as DTO.SocialAuthResponseModel);
+}
+
+export async function sendOwnershipOtp(body: { existing_user_id: number; phone: string }) {
+  return api.post(ENDPOINTS.auth.sendOwnershipOtp, body);
+}
+
+export async function verifyAndMergeAccounts(body: {
+  existing_user_id: number;
+  phone: string;
+  otp: string;
+  social_email?: string;
+  medium?: string;
+  unique_id?: string;
+}) {
+  const res = await api.post<DTO.SocialAuthResponseModel>(ENDPOINTS.auth.verifyAndMergeAccounts, body);
+  return (res as unknown as { data?: DTO.SocialAuthResponseModel }).data ?? (res as unknown as DTO.SocialAuthResponseModel);
+}
+
+export async function restoreDeletedAccount(userId: number) {
+  return api.post(ENDPOINTS.auth.restoreDeletedAccount, { user_id: userId });
 }
 
 export async function login(body: { mobile: string; password: string; device_type?: string }) {
@@ -447,12 +533,19 @@ export async function addBooking(body: AddBookingBody) {
 }
 
 export interface AddBookingPickupBody {
-  contactId?: number;
-  locationId?: number;
+  contact_id?: number;
+  customer_name?: string;
+  customer_phone?: string;
+  service_id: number;
+  location_id?: number;
+  device_id?: number;
+  booking_start?: string;
+  pickup_time?: string;
   address?: string;
-  phone?: string;
-  vehicleDetails?: string;
-  pickupTime?: string;
+  pickup_address?: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
+  notes?: string;
 }
 
 export async function addBookingPickup(body: AddBookingPickupBody) {

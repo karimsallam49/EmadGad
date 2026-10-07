@@ -219,8 +219,7 @@ export const WHATSAPP_URL = 'https://wa.me/201001234567';
 export const PHONE_NUMBER = '١٦٢٣٤';
 export const SOCIAL = {
   facebook: 'https://www.facebook.com/emadgadtyres',
-  instagram: 'https://www.facebook.com/emadgadtyres',
-  youtube: 'https://www.facebook.com/emadgadtyres',
+  instagram: 'https://www.instagram.com/emadgadtyre?stkn=MWM4cjV0OHR3czZhag==',
 };
 
 export const TIME_SLOTS = ['١٠:٠٠ ص', '١٢:٠٠ م', '٢:٠٠ م', '٤:٠٠ م', '٦:٠٠ م', '٨:٠٠ م'];

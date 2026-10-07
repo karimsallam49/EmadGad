@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowRight, BadgeCheck, MapPin, ShieldCheck, Truck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { TIRES, tireImg, type Tire } from '@/data';
 import { useWhatsappUrl } from '@/hooks/use-social-media';
 import { useCart } from '@/cart';
@@ -160,22 +160,6 @@ export default function TireDetailPage() {
                 </>
               )}
             </div>
-
-            <ul className="mt-6 space-y-3">
-              {[
-                { icon: BadgeCheck, text: 'تركيب مجاني في أقرب فرع عند شراء ٤ إطارات' },
-                { icon: Truck, text: 'متاح خدمة تركيب متنقلة لحد مكانك' },
-                { icon: ShieldCheck, text: 'إطار أصلي بالضمان من مصادر موثوقة' },
-                { icon: MapPin, text: 'الدفع عند الاستلام أو في الفرع' },
-              ].map((f) => (
-                <li key={f.text} className="flex items-center gap-3 text-base font-bold text-ink">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light text-ink">
-                    <f.icon className="h-5 w-5" />
-                  </span>
-                  {t(f.text)}
-                </li>
-              ))}
-            </ul>
 
             <ProductOffers productId={tire.productId} variationId={tire.variationId} />
 

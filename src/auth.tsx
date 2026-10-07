@@ -9,6 +9,8 @@ interface AuthCtx {
   user: CustomerInfoModel | null;
   loading: boolean;
   login: (mobile: string, password: string) => Promise<void>;
+  /** Sign the user in with an already-issued token (social auth) */
+  loginWithToken: (token: string) => Promise<void>;
   register: (body: { mobile: string; password: string; name?: string; email?: string }) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -60,6 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadCustomer();
   };
 
+  const loginWithToken = async (token: string) => {
+    localStorage.setItem(STORAGE_KEY, token);
+    setApiToken(token);
+    queryClient.clear();
+    await loadCustomer();
+  };
+
   const register = async (body: { mobile: string; password: string; name?: string; email?: string }) => {
     // 2-step chain: signup-email creates the account, then auto-login with the
     // same credentials to obtain the token (login identity is mobile).
@@ -86,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <Ctx.Provider value={{ user, loading, login, loginWithToken, register, logout, refreshUser }}>
       {children}
     </Ctx.Provider>
   );

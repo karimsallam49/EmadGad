@@ -40,7 +40,14 @@ export const ENDPOINTS = {
   // HUP / extended API
   auth: {
     checkPhone: `${API_BASE}/auth/check-phone`,
-    social: `${API_BASE}/auth/social`,
+    socialLogin: `${API_BASE}/connector/api/auth/social-customer-login`,
+    otpSetting: `${API_BASE}/connector/api/otp-setting`,
+    updateSocialMobile: `${API_BASE}/connector/api/auth/update-social-mobile`,
+    sendPhoneVerificationOtp: `${API_BASE}/connector/api/auth/send-phone-verification-otp`,
+    verifyPhoneAndSetMobile: `${API_BASE}/connector/api/auth/verify-phone-and-set-mobile`,
+    sendOwnershipOtp: `${API_BASE}/connector/api/auth/send-ownership-otp`,
+    verifyAndMergeAccounts: `${API_BASE}/connector/api/auth/verify-and-merge-accounts`,
+    restoreDeletedAccount: `${API_BASE}/connector/api/auth/restore-deleted-account`,
     login: `${API_BASE}/contact/login`,
     register: `${API_BASE}/contact/signup-email`,
     forgotPassword: `${API_BASE}/contact/forgot-password`,

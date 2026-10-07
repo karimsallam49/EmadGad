@@ -255,9 +255,6 @@ export default function OfferImage() {
           <p className="text-xs font-bold opacity-80">{t('٤ إطارات ابتداءً من')}</p>
           <p className="text-xl font-black text-brand">{num(12600)} <span className="text-sm">{t('جنيه')}</span></p>
         </div>
-        <div className="absolute -bottom-3 end-3 rotate-[2deg] rounded-xl bg-white px-4 py-2 shadow-lg border-2 border-coal">
-          <p className="text-sm font-black text-ink">{t('تركيب مجاني مع كل ٤ إطارات')}</p>
-        </div>
       </div>
     );
   }

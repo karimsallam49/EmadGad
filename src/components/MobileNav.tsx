@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Home, LayoutGrid, MapPin, Minus, Plus, ShoppingCart, Trash2, User } from 'lucide-react';
+import { CalendarCheck, Home, LayoutGrid, MapPin, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useCart } from '@/cart';
 import { itemDisplay, useLang } from '@/i18n';
@@ -14,7 +14,7 @@ export function MobileBottomNav() {
     { label: t('الرئيسية'), to: '/', icon: Home },
     { label: t('الأقسام'), to: '/taxonomy', icon: LayoutGrid },
     { label: t('الفروع'), to: '/branches', icon: MapPin },
-    { label: t('الخدمات'), to: '/booking', icon: User },
+    { label: t('الحجز'), to: '/booking', icon: CalendarCheck },
   ];
 
   return (

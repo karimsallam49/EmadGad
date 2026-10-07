@@ -4,6 +4,7 @@ import { useAuth } from '@/auth';
 import { useLang } from '@/i18n';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 
 export default function LoginPage() {
   const [mobile, setMobile] = useState('');
@@ -22,12 +23,13 @@ export default function LoginPage() {
       await login(mobile, password);
       navigate('/');
     } catch (err) {
-      const apiMessage = err instanceof Error ? err.message : t('فشل تسجيل الدخول');
-      const userMessage =
-        apiMessage === 'Unauthenticated.'
-          ? t('رقم الموبايل أو كلمة المرور غير صحيحة')
-          : apiMessage;
-      setError(userMessage);
+      const apiMessage = err instanceof Error ? err.message : '';
+      const isCredentialError = /credential|unauthenticated|unauthorized|password|mobile|invalid/i.test(apiMessage);
+      setError(
+        apiMessage && !isCredentialError
+          ? apiMessage
+          : t('رقم الموبايل أو كلمة المرور غير صحيحة'),
+      );
     } finally {
       setLoading(false);
     }
@@ -71,6 +73,12 @@ export default function LoginPage() {
           <Button type="submit" disabled={loading} className="w-full h-12 text-base font-black">
             {loading ? t('جاري الدخول...') : t('دخول')}
           </Button>
+          <div className="flex items-center gap-3 text-xs font-black text-ink-mute">
+            <span className="h-px flex-1 bg-border" />
+            {t('أو')}
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <GoogleAuthButton />
           <p className="text-center text-sm font-bold text-ink-mute">
             {t('مش عندك حساب؟')}{' '}
             <Link to="/register" className="font-black text-ink underline hover:text-brand">

@@ -8,6 +8,7 @@ import { useEcomProducts } from '@/hooks/use-ecom-products';
 import { useWhatsappUrl } from '@/hooks/use-social-media';
 import BatteryFinder, { type BatteryCarFilter } from '@/components/BatteryFinder';
 import ProductImage from '@/components/ProductImage';
+import { NotifyMeButton } from '@/components/NotifyMeButton';
 import type { EcomProductInfiniteModel } from '@/types/api';
 import { WhatsAppIcon } from './art';
 
@@ -28,6 +29,7 @@ export function ApiProductCard({
   const images =
     Array.isArray(p.images) && p.images.length ? p.images.filter(Boolean) : p.image_url ? [p.image_url] : [];
   const discount = Number(p.discount ?? 0);
+  const outOfStock = p.qty_available != null && Number(p.qty_available) <= 0;
   const detailTo = `${detailBase ?? '/products'}/${p.id}`;
   return (
     <article className="flex flex-col rounded-2xl border-2 border-border bg-white overflow-hidden transition-colors hover:border-ink">
@@ -64,24 +66,28 @@ export function ApiProductCard({
           )}
         </div>
         <div className="mt-auto pt-3">
-          <button
-            onClick={() =>
-              add(
-                {
-                  id: `${p.id}-${p.variation_id ?? p.variation?.id ?? 0}`,
-                  title: p.name,
-                  subtitle: p.variation?.name ?? '',
-                  price,
-                  productId: p.id,
-                  variationId: p.variation_id ?? p.variation?.id,
-                },
-                1,
-              )
-            }
-            className="w-full rounded-xl bg-brand text-coal h-12 text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all"
-          >
-            {t(ctaLabel)}
-          </button>
+          {outOfStock ? (
+            <NotifyMeButton productId={p.id} variationId={p.variation_id ?? p.variation?.id} />
+          ) : (
+            <button
+              onClick={() =>
+                add(
+                  {
+                    id: `${p.id}-${p.variation_id ?? p.variation?.id ?? 0}`,
+                    title: p.name,
+                    subtitle: p.variation?.name ?? '',
+                    price,
+                    productId: p.id,
+                    variationId: p.variation_id ?? p.variation?.id,
+                  },
+                  1,
+                )
+              }
+              className="w-full rounded-xl bg-brand text-coal h-12 text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all"
+            >
+              {t(ctaLabel)}
+            </button>
+          )}
         </div>
       </div>
     </article>

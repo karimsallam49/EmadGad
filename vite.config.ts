@@ -30,12 +30,12 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/connector/api': {
-        target: 'http://erp.emadgad.com',
+        target: 'https://erp.emadgad.com',
         changeOrigin: true,
         secure: true,
       },
       '/contact': {
-        target: 'http://erp.emadgad.com',
+        target: 'https://erp.emadgad.com',
         changeOrigin: true,
         secure: true,
       },

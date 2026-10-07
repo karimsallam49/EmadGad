@@ -608,6 +608,13 @@ function CarChip({ car }: { car: CustomerCarModel }) {
 
 function CarsStrip({ cars }: { cars: CustomerCarModel[] }) {
   const { isAr } = useLang();
+  if (cars.length === 0) {
+    return (
+      <div className="mb-5">
+        <AddCarDialog big />
+      </div>
+    );
+  }
   return (
     <div className="mb-5 flex items-center gap-2.5">
       <Carousel
@@ -629,7 +636,7 @@ function CarsStrip({ cars }: { cars: CustomerCarModel[] }) {
   );
 }
 
-function AddCarDialog({ fab = false }: { fab?: boolean }) {
+function AddCarDialog({ fab = false, big = false }: { fab?: boolean; big?: boolean }) {
   const { t } = useLang();
   const { user, refreshUser } = useAuth();
   const addCar = useAddCustomerCar();
@@ -688,7 +695,11 @@ function AddCarDialog({ fab = false }: { fab?: boolean }) {
       }}
     >
       <DialogTrigger asChild>
-        {fab ? (
+        {big ? (
+          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink bg-brand/40 py-5 text-lg font-black text-ink transition-colors hover:bg-brand">
+            <Plus className="h-6 w-6" strokeWidth={3} /> {t('أضف عربية')}
+          </button>
+        ) : fab ? (
           <button
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-coal border-2 border-coal shadow-[0_3px_0_#191919] transition-all hover:translate-y-[2px] hover:shadow-none"
             aria-label={t('أضف عربية')}

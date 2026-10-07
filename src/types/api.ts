@@ -21,8 +21,19 @@ export interface AuthUserModel {
 }
 
 export interface SocialAuthResponseModel {
-  user?: AuthUserModel;
-  token?: string;
+  success?: boolean;
+  /** If present the user is logged in regardless of other flags */
+  token?: string | null;
+  phone_exist?: boolean;
+  is_new_user?: boolean;
+  is_soft_deleted?: boolean;
+  user_id?: number | null;
+  action?: string;
+  message?: string;
+  phone_already_linked?: boolean;
+  existing_user?: { id: number; name?: string; phone?: string };
+  pending_social_user?: { name?: string; email?: string };
+  user?: AuthUserModel & { phone?: string; mobile?: string };
 }
 
 // ==================== Customer Models ====================

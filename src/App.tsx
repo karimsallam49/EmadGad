@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/auth';
 import { CartProvider } from '@/cart';
@@ -12,6 +12,7 @@ import { CartDrawer, MobileBottomNav, WhatsAppFloat } from '@/components/MobileN
 import { ChatWidget } from '@/components/ChatWidget';
 import { ApiDebugOverlay } from '@/components/ApiDebugOverlay';
 import SplashScreen from '@/components/SplashScreen';
+import { Toaster } from '@/components/ui/sonner';
 import Home from '@/pages/Home';
 
 const TiresPage = lazy(() => import('@/pages/TiresPage'));
@@ -19,7 +20,6 @@ const TireDetailPage = lazy(() => import('@/pages/TireDetailPage'));
 const BatteriesPage = lazy(() => import('@/pages/BatteriesPage'));
 const BatteryDetailPage = lazy(() => import('@/pages/BatteryDetailPage'));
 const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
-const ServicesPage = lazy(() => import('@/pages/ServicesPage'));
 const BookingPage = lazy(() => import('@/pages/BookingPage'));
 const CartPage = lazy(() => import('@/pages/CartPage'));
 const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
@@ -63,7 +63,7 @@ export default function App() {
                   <Route path="/tires/:id" element={<TireDetailPage />} />
                   <Route path="/batteries" element={<BatteriesPage />} />
                   <Route path="/batteries/:id" element={<BatteryDetailPage />} />
-                  <Route path="/services" element={<ServicesPage />} />
+                  <Route path="/services" element={<Navigate to="/booking" replace />} />
                   <Route path="/booking" element={<BookingPage />} />
                   <Route path="/rescue" element={<RescuePage />} />
                   <Route path="/cart" element={<CartPage />} />
@@ -90,6 +90,7 @@ export default function App() {
               <ChatWidget />
               <ApiDebugOverlay />
               <CartDrawer />
+              <Toaster position="top-center" richColors />
             </div>
             </CartProvider>
           </AuthProvider>
