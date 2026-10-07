@@ -10,6 +10,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CartDrawer, MobileBottomNav, WhatsAppFloat } from '@/components/MobileNav';
 import { ChatWidget } from '@/components/ChatWidget';
+import { ApiDebugOverlay } from '@/components/ApiDebugOverlay';
 import SplashScreen from '@/components/SplashScreen';
 import Home from '@/pages/Home';
 
@@ -32,6 +33,8 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const RescuePage = lazy(() => import('@/pages/RescuePage'));
 const ProductsPage = lazy(() => import('@/pages/ProductsPage'));
 const TaxonomyPage = lazy(() => import('@/pages/TaxonomyPage'));
+const BlogListPage = lazy(() => import('@/pages/BlogListPage'));
+const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -71,6 +74,8 @@ export default function App() {
                   <Route path="/products" element={<ProductsPage />} />
                   <Route path="/products/:id" element={<ProductDetailPage />} />
                   <Route path="/taxonomy" element={<TaxonomyPage />} />
+                  <Route path="/blog" element={<BlogListPage />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -83,6 +88,7 @@ export default function App() {
               <MobileBottomNav />
               <WhatsAppFloat />
               <ChatWidget />
+              <ApiDebugOverlay />
               <CartDrawer />
             </div>
             </CartProvider>

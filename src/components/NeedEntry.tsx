@@ -8,14 +8,14 @@ const NEEDS = [
     title: 'كاوتش',
     sub: 'اختار مقاس الإطار',
     href: '/tires?category_id=2217',
-    art: <img src={IMG.tire1} alt="" className="h-16 w-16 rounded-2xl object-cover" />,
+    art: <img src={IMG.tire1} alt="" width={64} height={64} loading="lazy" decoding="async" className="h-16 w-16 rounded-2xl object-cover" />,
     primary: true,
   },
   {
     title: 'بطارية',
     sub: 'اعرف البطارية المناسبة',
     href: '/batteries?category_id=2222',
-    art: <img src={IMG.battery} alt="" className="h-16 w-16 rounded-2xl object-cover" />,
+    art: <img src={IMG.battery} alt="" width={64} height={64} loading="lazy" decoding="async" className="h-16 w-16 rounded-2xl object-cover" />,
   },
   {
     title: 'خدمة سريعة',

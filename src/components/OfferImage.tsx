@@ -225,10 +225,17 @@ export default function OfferImage() {
 
   if (isLoading) {
     return (
-      <div
-        className="aspect-square sm:aspect-[3/2] w-full animate-pulse rounded-2xl border-2 border-coal bg-muted"
-        aria-hidden
-      />
+      <div className="relative">
+        <div className="relative overflow-hidden rounded-2xl border-2 border-coal shadow-[0_12px_0_#191919]">
+          <img
+            src={IMG.hero}
+            alt="New tires from EmadGad"
+            className="w-full h-full object-cover aspect-[3/2]"
+            loading="eager"
+            fetchPriority="high"
+          />
+        </div>
+      </div>
     );
   }
 

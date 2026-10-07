@@ -197,11 +197,11 @@ export const SHIPPING_GOVS = ['القاهرة', 'الجيزة', 'القليوب�
 export const SHIPPING_FEE = 80;
 
 export const IMG = {
-  tire1: '/assets/tire1.jpg',
-  tire2: '/assets/tire2.jpg',
-  tire3: '/assets/tire3.jpg',
-  battery: '/assets/battery.jpg',
-  hero: '/assets/hero.jpg',
+  tire1: '/assets/tire1.webp',
+  tire2: '/assets/tire2.webp',
+  tire3: '/assets/tire3.webp',
+  battery: '/assets/battery.webp',
+  hero: '/assets/hero.webp',
 } as const;
 
 export function tireImg(t: Tire): string {

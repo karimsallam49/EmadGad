@@ -578,7 +578,7 @@ export default function CheckoutPage() {
                   <button key={g.gateway} type="button" onClick={() => setPayment(g.gateway)}
                     className={`flex items-center gap-3 rounded-xl border-2 p-4 text-start transition-colors ${payment === g.gateway ? 'border-ink bg-brand-light dark:bg-brand/20 text-ink' : 'border-border bg-white dark:bg-[#1c1c1c] text-ink hover:border-ink'}`}>
                     {g.gateway_image ? (
-                      <img src={g.gateway_image} alt={g.gateway_title} className="h-6 w-10 object-contain shrink-0" />
+                      <img src={g.gateway_image} alt={g.gateway_title} loading="lazy" className="h-6 w-10 object-contain shrink-0" />
                     ) : (
                       <CreditCard className="h-6 w-6 shrink-0" />
                     )}

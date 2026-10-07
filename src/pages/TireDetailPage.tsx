@@ -84,6 +84,8 @@ export default function TireDetailPage() {
             <img
               src={tireImg(tire)}
               alt={`${tire.brand} ${tire.model} ${tire.size}`}
+              decoding="async"
+              fetchPriority="high"
               className="w-full aspect-square object-contain mix-blend-multiply p-6"
             />
           </div>

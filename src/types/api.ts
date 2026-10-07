@@ -249,6 +249,57 @@ export interface BlogPostModel {
   blogDate: string;
 }
 
+// ==================== E-Commerce Blogs ====================
+
+export interface BlogSeo {
+  title?: string;
+  description?: string;
+  keywords?: string[];
+  canonical?: string;
+  robots?: string;
+  og?: {
+    title?: string;
+    description?: string;
+    image?: string;
+    url?: string;
+    type?: string;
+    site_name?: string;
+    locale?: string;
+    locale_alternate?: string;
+  };
+  twitter?: {
+    card?: string;
+    title?: string;
+    description?: string;
+    image?: string;
+  };
+  article?: {
+    published_time?: string;
+    modified_time?: string;
+    author?: string;
+    section?: string;
+  };
+  structured_data?: Record<string, unknown>;
+}
+
+export interface EcomBlogPostModel {
+  id: number;
+  title: string;
+  title_ar?: string | null;
+  slug?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  blog_date?: string | null;
+  excerpt?: string | null;
+  excerpt_ar?: string | null;
+  content?: string | null;
+  content_ar?: string | null;
+  category?: { id: number; name: string } | null;
+  sub_category?: { id: number; name: string } | null;
+  seo?: BlogSeo | null;
+  seo_ar?: BlogSeo | null;
+}
+
 // ==================== Location Models ====================
 
 export interface BusinessLocationModel {

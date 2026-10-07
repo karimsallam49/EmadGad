@@ -7,7 +7,7 @@ interface Props {
   className?: string;
 }
 
-const PLACEHOLDER = '/assets/product-placeholder.jpeg';
+const PLACEHOLDER = '/assets/product-placeholder.webp';
 
 /** Renders only the first product image; extra images mount on hover and cycle with a crossfade */
 export default function ProductImage({ images, alt, className }: Props) {

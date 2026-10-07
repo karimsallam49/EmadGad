@@ -817,6 +817,20 @@ const DICT: Record<string, string> = {
   'تأكد من وضوح الصورة': 'make sure the photo is clear',
   'من سجلك': 'from your record',
   'من آخر أمر عمل': 'from last job order',
+
+  // ── Blog ──
+  'أحدث المقالات': 'Latest Articles',
+  'نصايح ومواضيع تهمّك عن عربيتك — من فريق عماد جاد.': 'Car tips & topics that matter — from the EmadGad team.',
+  'اقرأ المقال': 'Read article',
+  'المقالات': 'Articles',
+  'مفيش مقالات لسه — تابعنا قريب.': 'No articles yet — check back soon.',
+  'المقال غير موجود': 'Article not found',
+  'المقال ده مش متاح — ممكن اتمسح أو اللينك غلط.': 'This article is unavailable — it may have been removed or the link is broken.',
+  'ارجع للمقالات': 'Back to articles',
+  'كل المقالات': 'All articles',
+  'عربيتك محتاجة خدمة؟': 'Does your car need service?',
+  'احجز من غير مكالمات — اختار الفرع والخدمة والميعاد.': 'Book without calls — pick the branch, service, and time.',
+  'احجز دلوقتي': 'Book now',
 };
 
 /** Resolve a cart item's display title/subtitle from its product id, in the active language */

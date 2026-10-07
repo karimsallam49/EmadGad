@@ -26,7 +26,7 @@ export default function SplashScreen() {
       }`}
     >
       <img
-        src="/assets/ezgif-76ee578630df5013.gif"
+        src="/assets/splash.webp"
         alt=""
         className="w-60 sm:w-80"
         draggable={false}

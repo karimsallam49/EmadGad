@@ -16,10 +16,10 @@ export function StoreBadges({ className = 'h-10' }: { className?: string }) {
   return (
     <div className="flex items-center gap-3" dir="ltr">
       <span className="inline-flex rounded-lg overflow-hidden ring-1 ring-white/15 cursor-pointer hover:opacity-90 transition-opacity" title={t('تطبيق iOS')}>
-        <img src="/assets/appstore.svg" alt="Download on the App Store" width={120} height={40} className={`${className} w-auto`} />
+        <img src="/assets/appstore.svg" alt="Download on the App Store" width={120} height={40} loading="lazy" className={`${className} w-auto`} />
       </span>
       <span className="inline-flex rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" title={t('تطبيق أندرويد')}>
-        <img src="/assets/playstore.svg" alt="Get it on Google Play" width={135} height={40} className={`${className} w-auto`} />
+        <img src="/assets/playstore.svg" alt="Get it on Google Play" width={135} height={40} loading="lazy" className={`${className} w-auto`} />
       </span>
     </div>
   );
@@ -93,7 +93,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 lg:grid-cols-5 lg:gap-8">
           <div className="col-span-2 flex flex-col items-center text-center sm:items-start sm:text-start md:col-span-4 lg:col-span-1">
             <span className="inline-flex items-center bg-brand rounded-md px-3 py-2">
-              <img src="/assets/logo-dark.png" alt="EmadGad" width={638} height={141} className="h-8 w-auto" />
+              <img src="/assets/logo-dark.webp" alt="EmadGad" width={290} height={64} loading="lazy" className="h-8 w-auto" />
             </span>
             <p className="mt-4 max-w-xs text-sm font-semibold text-white/60 leading-relaxed">
               {t('إطارات وبطاريات وخدمات سيارات سريعة — بأسعار مناسبة وخدمة عندك أو في أقرب فرع.')}
@@ -109,7 +109,7 @@ export default function Footer() {
                   <a key={s.id} href={s.link} target="_blank" rel="noreferrer" aria-label={s.name}
                     className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-brand hover:text-coal transition-colors">
                     {s.icon_url ? (
-                      <img src={s.icon_url} alt="" className="h-5 w-5 object-contain" />
+                      <img src={s.icon_url} alt="" loading="lazy" className="h-5 w-5 object-contain" />
                     ) : Icon ? (
                       <Icon className="h-5 w-5" />
                     ) : (

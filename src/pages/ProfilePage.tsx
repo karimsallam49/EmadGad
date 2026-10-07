@@ -620,9 +620,11 @@ function CarsStrip({ cars }: { cars: CustomerCarModel[] }) {
               <CarChip car={car} />
             </CarouselItem>
           ))}
+          <CarouselItem className="basis-auto pl-2.5">
+            <AddCarDialog fab />
+          </CarouselItem>
         </CarouselContent>
       </Carousel>
-      <AddCarDialog fab />
     </div>
   );
 }
@@ -643,8 +645,6 @@ function AddCarDialog({ fab = false }: { fab?: boolean }) {
   const { data: brands, isLoading: brandsLoading } = useBrands();
   const { data: models, isLoading: modelsLoading } = useModels(brandId ? Number(brandId) : null);
 
-  const selectedModel = models?.find((m) => String(m.id) === modelId);
-
   const reset = () => {
     setBrandId('');
     setModelId('');
@@ -659,15 +659,13 @@ function AddCarDialog({ fab = false }: { fab?: boolean }) {
     setError(null);
     try {
       await addCar.mutateAsync({
-        id: user.id,
-        body: {
-          car_brand_id: brandId ? Number(brandId) : undefined,
-          car_model_id: modelId ? Number(modelId) : undefined,
-          model: selectedModel?.name,
-          plate_number: plate.trim() || undefined,
-          manufacturing_year: year.trim() || undefined,
-          color: color.trim() || undefined,
-        },
+        plate_number: plate.trim() || 'بدون لوحة',
+        brand_id: parseInt(brandId, 10),
+        model_id: parseInt(modelId, 10),
+        manufacturing_year: year.trim(),
+        color: color.trim() || 'غير محدد',
+        chassis_number: '-',
+        car_type: 'ملاكي',
       });
       await refreshUser();
       toast.success(t('اتضافت العربية'));
@@ -791,7 +789,7 @@ function AddCarDialog({ fab = false }: { fab?: boolean }) {
         <DialogFooter>
           <button
             onClick={submit}
-            disabled={addCar.isPending || !brandId || !modelId}
+            disabled={addCar.isPending || !brandId || !modelId || !year.trim()}
             className={primaryBtn}
           >
             {addCar.isPending ? t('جاري الإضافة...') : (

@@ -50,6 +50,7 @@ export const ENDPOINTS = {
 
   customer: (id: number) => `${API_BASE}/connector/api/customers/${id}`,
   customerCars: (id: number) => `${API_BASE}/connector/api/customers/${id}/cars`,
+  addCar: `${API_BASE}/connector/api/add/car`,
   customerLoyalty: (id: number) => `${API_BASE}/connector/api/customers/${id}/loyalty-points`,
 
   vehicles: `${API_BASE}/connector/api/vehicles`,
@@ -105,6 +106,10 @@ export const ENDPOINTS = {
   userNotificationRead: (id: number) => `${API_BASE}/connector/api/user-notifications/${id}/read`,
   userNotificationsReadAll: `${API_BASE}/connector/api/user-notifications/read-all`,
   userNotification: (id: number) => `${API_BASE}/connector/api/user-notifications/${id}`,
+
+  ecomBlogs: `${API_BASE}/connector/api/ecommerce/blogs`,
+  ecomBlog: (slug: string) =>
+    `${API_BASE}/connector/api/ecommerce/blogs/${encodeURIComponent(slug)}`,
 
   aboutUs: `${API_BASE}/connector/api/about-us`,
   blogPosts: `${API_BASE}/connector/api/blog-posts`,

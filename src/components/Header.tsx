@@ -55,7 +55,7 @@ export function Logo({ className = 'h-9' }: { className?: string }) {
   return (
     <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="EmadGad - الرئيسية">
       <span className="inline-flex items-center rounded-lg px-1.5 py-1 dark:bg-brand transition-colors">
-        <img src="/assets/logo-dark.png" alt="EmadGad" width={638} height={141} className={`${className} w-auto`} />
+        <img src="/assets/logo-dark.webp" alt="EmadGad" width={290} height={64} className={`${className} w-auto`} />
       </span>
     </Link>
   );

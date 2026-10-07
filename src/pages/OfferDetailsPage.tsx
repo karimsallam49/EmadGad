@@ -84,7 +84,7 @@ export default function OfferDetailsPage() {
 
         <div className="mt-6 overflow-hidden rounded-2xl border-2 border-ink bg-white dark:bg-[#1c1c1c] shadow-[0_10px_0_#f6c744]">
           {image ? (
-            <img src={image} alt={title} className="h-64 w-full bg-muted object-cover sm:h-80" />
+            <img src={image} alt={title} decoding="async" fetchPriority="high" className="h-64 w-full bg-muted object-cover sm:h-80" />
           ) : videoUrl && /\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i.test(videoUrl) ? (
             <video src={videoUrl} className="h-64 w-full bg-black object-cover sm:h-80" autoPlay loop muted playsInline preload="metadata" />
           ) : videoUrl && /instagram\.com\//i.test(videoUrl) ? (

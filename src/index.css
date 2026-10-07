@@ -171,6 +171,64 @@
   animation-name: marquee-ltr;
 }
 
+/* Rich-text blog content rendered from admin-authored HTML */
+.blog-content {
+  @apply text-base sm:text-lg font-semibold leading-8 text-ink;
+}
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4 {
+  @apply font-black text-ink mt-8 mb-3 leading-snug;
+}
+.blog-content h2 {
+  @apply text-2xl sm:text-3xl;
+}
+.blog-content h3 {
+  @apply text-xl sm:text-2xl;
+}
+.blog-content h4 {
+  @apply text-lg sm:text-xl;
+}
+.blog-content p {
+  @apply my-4;
+}
+.blog-content a {
+  @apply font-bold text-ink underline decoration-brand decoration-2 underline-offset-4 hover:text-ink-mute transition-colors;
+}
+.blog-content ul {
+  @apply my-4 list-disc ps-6 space-y-2;
+}
+.blog-content ol {
+  @apply my-4 list-decimal ps-6 space-y-2;
+}
+.blog-content blockquote {
+  @apply my-6 border-s-4 border-brand ps-4 py-1 text-ink-soft font-bold;
+}
+.blog-content img {
+  @apply my-6 rounded-2xl border-2 border-ink max-w-full h-auto;
+}
+.blog-content figure {
+  @apply my-6;
+}
+.blog-content table {
+  @apply my-6 w-full border-collapse text-sm;
+}
+.blog-content th,
+.blog-content td {
+  @apply border border-border px-3 py-2 text-start;
+}
+.blog-content th {
+  @apply bg-muted font-black;
+}
+.blog-content strong,
+.blog-content b {
+  @apply font-black;
+}
+.blog-content hr {
+  @apply my-8 border-t-2 border-border;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee-rtl,
   .animate-loyalty-shine {

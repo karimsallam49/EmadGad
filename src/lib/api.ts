@@ -1,4 +1,5 @@
 import { API_BASE, ENDPOINTS } from './endpoints';
+import { apiLog } from './api-debug';
 import type * as DTO from '@/types/api';
 
 // Re-export the DTOs so the rest of the app can import from '@/lib/api'
@@ -53,16 +54,29 @@ export async function apiRequest<T = unknown>(
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    credentials: 'same-origin',
-    body: body === undefined || body === null
-      ? undefined
-      : isFormData
-        ? (body as FormData)
-        : JSON.stringify(body),
-  });
+  const t0 = performance.now();
+  apiLog({ phase: 'start', method, url });
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      credentials: 'same-origin',
+      body: body === undefined || body === null
+        ? undefined
+        : isFormData
+          ? (body as FormData)
+          : JSON.stringify(body),
+    });
+  } catch (e) {
+    // fetch rejected — CORS block, offline, DNS, or mixed-content block on mobile
+    const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    apiLog({ phase: 'network-error', method, url, ms: performance.now() - t0, detail });
+    throw e;
+  }
+
+  const ms = performance.now() - t0;
 
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
@@ -77,6 +91,7 @@ export async function apiRequest<T = unknown>(
     } catch {
       // keep raw text
     }
+    apiLog({ phase: 'http-error', method, url, status: res.status, ms, detail: String(message).slice(0, 300) });
     const err = new Error(message) as ApiError;
     err.status = res.status;
     err.statusText = res.statusText;
@@ -84,10 +99,19 @@ export async function apiRequest<T = unknown>(
   }
 
   if (res.status === 204) {
+    apiLog({ phase: 'ok', method, url, status: 204, ms });
     return { success: true } as DTO.ApiResponse<T>;
   }
 
-  return (await res.json()) as DTO.ApiResponse<T>;
+  try {
+    const json = (await res.json()) as DTO.ApiResponse<T>;
+    apiLog({ phase: 'ok', method, url, status: res.status, ms });
+    return json;
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    apiLog({ phase: 'parse-error', method, url, status: res.status, ms, detail });
+    throw e;
+  }
 }
 
 export const api = {
@@ -143,18 +167,17 @@ export async function getCustomerCars(id: number) {
 }
 
 export interface AddCustomerCarBody {
-  car_brand_id?: number;
-  car_model_id?: number;
-  model?: string;
-  plate_number?: string;
-  manufacturing_year?: string;
-  color?: string;
-  chassis_number?: string;
-  motor_cc?: string;
+  plate_number: string;
+  brand_id: number;
+  model_id: number;
+  manufacturing_year: string;
+  color: string;
+  chassis_number: string;
+  car_type: string;
 }
 
-export async function addCustomerCar(id: number, body: AddCustomerCarBody) {
-  return api.post<DTO.CustomerCarModel>(ENDPOINTS.customerCars(id), body);
+export async function addCustomerCar(body: AddCustomerCarBody) {
+  return apiRequest<unknown>(ENDPOINTS.addCar, 'POST', body);
 }
 
 // ==================== Contact KM (odometer) ====================
@@ -549,6 +572,40 @@ export async function deleteNotification(id: number) {
 
 export async function getBlogPosts() {
   return api.get<DTO.BlogPostModel[]>(ENDPOINTS.blogPosts);
+}
+
+export interface EcomBlogsPage {
+  posts: DTO.EcomBlogPostModel[];
+  currentPage: number;
+  lastPage: number;
+  total: number;
+}
+
+/** GET ecommerce/blogs — paginated public blog list */
+export async function getEcomBlogs(query: {
+  business_id: number;
+  per_page?: number;
+  page?: number;
+}): Promise<EcomBlogsPage> {
+  const res = await apiRequest<DTO.EcomBlogPostModel[]>(ENDPOINTS.ecomBlogs, 'GET', undefined, query);
+  const raw = res as DTO.ApiResponse<DTO.EcomBlogPostModel[]> & {
+    meta?: { current_page?: number; last_page?: number; per_page?: number; total?: number };
+    current_page?: number;
+    last_page?: number;
+    total?: number;
+  };
+  return {
+    posts: raw.data ?? [],
+    currentPage: Number(raw.meta?.current_page ?? raw.current_page ?? query.page ?? 1),
+    lastPage: Number(raw.meta?.last_page ?? raw.last_page ?? 1),
+    total: Number(raw.meta?.total ?? raw.total ?? raw.data?.length ?? 0),
+  };
+}
+
+/** GET ecommerce/blogs/{slug} — full post content + SEO payload */
+export async function getEcomBlog(slug: string, businessId = 1) {
+  const res = await api.get<DTO.EcomBlogPostModel>(ENDPOINTS.ecomBlog(slug), { business_id: businessId });
+  return res.data ?? null;
 }
 
 // ==================== E-Commerce Checkout ====================
