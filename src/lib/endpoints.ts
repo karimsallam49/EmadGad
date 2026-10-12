@@ -1,9 +1,8 @@
-// Dev requests stay same-origin ('' → /connector/api/...) and get forwarded by the
-// Vite proxy in vite.config.ts — this sidesteps CORS entirely. Production builds
-// use VITE_API_BASE_URL (or the fallback) as absolute URLs.
+// In dev, use empty string so Vite proxy handles requests.
+// In production, use the absolute API URL.
 export const API_BASE = import.meta.env.DEV
   ? ''
-  : ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'https://erp.emadgad.com');
+  : (import.meta.env.VITE_API_BASE_URL as string) || 'https://erp.emadgad.com';
 
 export const ENDPOINTS = {
   // Core catalogues under /connector/api
@@ -77,9 +76,12 @@ export const ENDPOINTS = {
 
   pickup: `${API_BASE}/connector/api/pickup-requests`,
   customerInfo: `${API_BASE}/connector/api/Info/customer`,
+  customerBookings: `${API_BASE}/connector/api/customer/booking`,
   contactKm: `${API_BASE}/connector/api/contact-km`,
   contactKmScan: `${API_BASE}/connector/api/contact-km/scan`,
   customerBasicInfo: (id: number) => `${API_BASE}/connector/api/contactapi/${id}/basic-info`,
+  customerJobOrders: `${API_BASE}/connector/api/customer/joborder`,
+  jobOrderPhoneCheck: `${API_BASE}/contact/check/phone/joborder`,
   ecomProducts: `${API_BASE}/connector/api/public/ecom-products`,
   ecomProductsInfinite: `${API_BASE}/connector/api/public/ecom-products-infinite`,
   categoryItemNextLevel: (itemId: number) => `${API_BASE}/connector/api/public/category-items/${itemId}/next-level-direct`,
@@ -103,6 +105,7 @@ export const ENDPOINTS = {
   deliveryFee: `${API_BASE}/connector/api/delivery-fee`,
   deliveryFeeCalculate: `${API_BASE}/connector/api/delivery-fee/calculate`,
   ecomSocialMedia: `${API_BASE}/connector/api/ecommerce/social-media`,
+  ecomTracking: `${API_BASE}/connector/api/ecommerce/tracking`,
   ecomMessages: `${API_BASE}/connector/api/ecommerce/messages`,
   ecomMessagesRead: `${API_BASE}/connector/api/ecommerce/messages/read`,
   ecomNotifyMe: (productId: number) =>
@@ -119,6 +122,8 @@ export const ENDPOINTS = {
     `${API_BASE}/connector/api/ecommerce/blogs/${encodeURIComponent(slug)}`,
 
   aboutUs: `${API_BASE}/connector/api/about-us`,
+  legalPages: `${API_BASE}/connector/api/legal-pages`,
+  legalPage: (slug: string) => `${API_BASE}/connector/api/legal-pages/${encodeURIComponent(slug)}`,
   blogPosts: `${API_BASE}/connector/api/blog-posts`,
   businessLocations: `${API_BASE}/connector/api/business-location-with-website-settings`,
 } as const;

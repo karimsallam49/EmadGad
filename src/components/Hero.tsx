@@ -29,9 +29,9 @@ export default function Hero({ onSearch }: { onSearch: (size: string) => void })
               {t('أسرع خدمة في مصر')}
             </p>
           </div>
-          <h1 className="mt-4 text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] lg:leading-[1.2] text-coal">
+          <h1 className="mt-4 text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.3] lg:leading-[1.2] text-coal">
             {t('كل اللي عربيتك محتاجاه..')}
-            <span className="block mt-1">{t('أسرع وأسهل')}</span>
+            <span className="block mt-4 sm:mt-[1.9rem]">{t('أسرع وأسهل')}</span>
           </h1>
           <p className="mt-3 text-lg sm:text-xl font-semibold text-coal/75 leading-relaxed">
             {t('إطارات، بطاريات وخدمات سريعة لعربيتك — بأسعار مناسبة، وخدمة عندك أو في أقرب فرع.')}

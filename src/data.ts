@@ -9,7 +9,6 @@ export interface Tire {
   price: number; // per tire, EGP
   badge?: 'الأكثر مبيعًا' | 'أفضل قيمة' | 'عرض' | 'اقتصادي';
   usage: 'يومي' | 'اقتصادي' | 'أداء' | 'SUV';
-  rating: number; // 1-5
   stock: 'متوفر' | 'كمية محدودة' | 'نفدت الكمية';
   image?: string;
   /** All product images — first one is the cover, rest swap on hover */
@@ -63,18 +62,18 @@ export interface Branch {
 }
 
 export const TIRES: Tire[] = [
-  { id: 't1', brand: 'Apollo', model: 'Alnac 4G', size: '195/65 R15', width: 195, profile: 65, rim: 15, price: 5400, badge: 'الأكثر مبيعًا', usage: 'يومي', rating: 5, stock: 'متوفر' },
-  { id: 't2', brand: 'Apollo', model: 'Amazer 4G Eco', size: '185/70 R14', width: 185, profile: 70, rim: 14, price: 4350, badge: 'أفضل قيمة', usage: 'اقتصادي', rating: 4, stock: 'متوفر' },
-  { id: 't3', brand: 'Arroyo', model: 'Grand Sport 2', size: '205/55 R16', width: 205, profile: 55, rim: 16, price: 4950, usage: 'يومي', rating: 4, stock: 'متوفر' },
-  { id: 't4', brand: 'Hankook', model: 'Kinergy Eco2', size: '195/65 R15', width: 195, profile: 65, rim: 15, price: 5100, badge: 'عرض', usage: 'اقتصادي', rating: 4, stock: 'متوفر' },
-  { id: 't5', brand: 'Arroyo', model: 'Eco Pro', size: '185/65 R15', width: 185, profile: 65, rim: 15, price: 3950, badge: 'اقتصادي', usage: 'اقتصادي', rating: 4, stock: 'متوفر' },
-  { id: 't6', brand: 'Hankook', model: 'Ventus Prime3', size: '205/55 R16', width: 205, profile: 55, rim: 16, price: 8200, usage: 'أداء', rating: 5, stock: 'كمية محدودة' },
-  { id: 't7', brand: 'Atlander', model: 'AX-77', size: '195/60 R15', width: 195, profile: 60, rim: 15, price: 4250, badge: 'اقتصادي', usage: 'اقتصادي', rating: 4, stock: 'متوفر' },
-  { id: 't8', brand: 'Apollo', model: 'Apterra HT2', size: '225/60 R17', width: 225, profile: 60, rim: 17, price: 7900, usage: 'SUV', rating: 4, stock: 'متوفر' },
-  { id: 't9', brand: 'Atlander', model: 'Roverstar H/T', size: '215/60 R16', width: 215, profile: 60, rim: 16, price: 5850, usage: 'SUV', rating: 4, stock: 'متوفر' },
-  { id: 't10', brand: 'Aries', model: 'A-One', size: '215/55 R17', width: 215, profile: 55, rim: 17, price: 6400, usage: 'أداء', rating: 4, stock: 'كمية محدودة' },
-  { id: 't11', brand: 'Apollo', model: 'Apterra Cross', size: '215/60 R16', width: 215, profile: 60, rim: 16, price: 6900, usage: 'SUV', rating: 4, stock: 'متوفر' },
-  { id: 't12', brand: 'Advance', model: 'GL-283 A/S', size: '185/70 R14', width: 185, profile: 70, rim: 14, price: 3150, badge: 'اقتصادي', usage: 'اقتصادي', rating: 3, stock: 'متوفر' },
+  { id: 't1', brand: 'Apollo', model: 'Alnac 4G', size: '195/65 R15', width: 195, profile: 65, rim: 15, price: 5400, badge: 'الأكثر مبيعًا', usage: 'يومي', stock: 'متوفر' },
+  { id: 't2', brand: 'Apollo', model: 'Amazer 4G Eco', size: '185/70 R14', width: 185, profile: 70, rim: 14, price: 4350, badge: 'أفضل قيمة', usage: 'اقتصادي', stock: 'متوفر' },
+  { id: 't3', brand: 'Arroyo', model: 'Grand Sport 2', size: '205/55 R16', width: 205, profile: 55, rim: 16, price: 4950, usage: 'يومي', stock: 'متوفر' },
+  { id: 't4', brand: 'Hankook', model: 'Kinergy Eco2', size: '195/65 R15', width: 195, profile: 65, rim: 15, price: 5100, badge: 'عرض', usage: 'اقتصادي', stock: 'متوفر' },
+  { id: 't5', brand: 'Arroyo', model: 'Eco Pro', size: '185/65 R15', width: 185, profile: 65, rim: 15, price: 3950, badge: 'اقتصادي', usage: 'اقتصادي', stock: 'متوفر' },
+  { id: 't6', brand: 'Hankook', model: 'Ventus Prime3', size: '205/55 R16', width: 205, profile: 55, rim: 16, price: 8200, usage: 'أداء', stock: 'كمية محدودة' },
+  { id: 't7', brand: 'Atlander', model: 'AX-77', size: '195/60 R15', width: 195, profile: 60, rim: 15, price: 4250, badge: 'اقتصادي', usage: 'اقتصادي', stock: 'متوفر' },
+  { id: 't8', brand: 'Apollo', model: 'Apterra HT2', size: '225/60 R17', width: 225, profile: 60, rim: 17, price: 7900, usage: 'SUV', stock: 'متوفر' },
+  { id: 't9', brand: 'Atlander', model: 'Roverstar H/T', size: '215/60 R16', width: 215, profile: 60, rim: 16, price: 5850, usage: 'SUV', stock: 'متوفر' },
+  { id: 't10', brand: 'Aries', model: 'A-One', size: '215/55 R17', width: 215, profile: 55, rim: 17, price: 6400, usage: 'أداء', stock: 'كمية محدودة' },
+  { id: 't11', brand: 'Apollo', model: 'Apterra Cross', size: '215/60 R16', width: 215, profile: 60, rim: 16, price: 6900, usage: 'SUV', stock: 'متوفر' },
+  { id: 't12', brand: 'Advance', model: 'GL-283 A/S', size: '185/70 R14', width: 185, profile: 70, rim: 14, price: 3150, badge: 'اقتصادي', usage: 'اقتصادي', stock: 'متوفر' },
 ];
 
 export const BATTERIES: Battery[] = [
@@ -170,14 +169,14 @@ export const TIRE_RIMS = [13, 14, 15, 16, 17, 18];
 export const YEARS = Array.from({ length: 26 }, (_, i) => 2026 - i);
 
 export const BRANCHES: Branch[] = [
-  { id: 'br1', gov: 'القاهرة', area: 'مدينة نصر', name: 'فرع مدينة نصر', address: '١٥ شارع عباس العقاد، مدينة نصر', hours: 'يوميًا 9 ص - 11 م', phone: '01001234567', services: ['إطارات', 'بطاريات', 'ترصيص', 'ضبط زوايا'] },
-  { id: 'br2', gov: 'القاهرة', area: 'المعادي', name: 'فرع المعادي', address: '٢٨ شارع ٩، المعادي', hours: 'يوميًا 9 ص - 11 م', phone: '01002234567', services: ['إطارات', 'بطاريات', 'زيوت'] },
-  { id: 'br3', gov: 'القاهرة', area: 'مصر الجديدة', name: 'فرع مصر الجديدة', address: '٤٠ شارع الميرغني، مصر الجديدة', hours: 'يوميًا 9 ص - 11 م', phone: '01003234567', services: ['إطارات', 'بطاريات', 'ترصيص'] },
-  { id: 'br4', gov: 'الجيزة', area: 'المهندسين', name: 'فرع المهندسين', address: '١٢ شارع شهاب، المهندسين', hours: 'يوميًا 9 ص - 11 م', phone: '01004234567', services: ['إطارات', 'بطاريات'] },
-  { id: 'br5', gov: 'الجيزة', area: 'أكتوبر', name: 'فرع ٦ أكتوبر', address: 'المحور المركزي، الحي الثاني، ٦ أكتوبر', hours: 'يوميًا 9 ص - 12 م', phone: '01005234567', services: ['إطارات', 'بطاريات', 'ترصيص', 'ضبط زوايا'] },
-  { id: 'br6', gov: 'الإسكندرية', area: 'سموحة', name: 'فرع سموحة', address: '٧ شارع فيكتور عمانويل، سموحة', hours: 'يوميًا 9 ص - 11 م', phone: '01006234567', services: ['إطارات', 'بطاريات', 'زيوت'] },
-  { id: 'br7', gov: 'الدقهلية', area: 'المنصورة', name: 'فرع المنصورة', address: 'شارع الجمهورية، المنصورة', hours: 'يوميًا 9 ص - 10 م', phone: '01007234567', services: ['إطارات', 'بطاريات'] },
-  { id: 'br8', gov: 'الغربية', area: 'طنطا', name: 'فرع طنطا', address: 'شارع البحر، طنطا', hours: 'يوميًا 9 ص - 10 م', phone: '01008234567', services: ['إطارات', 'بطاريات'] },
+  { id: 'br1', gov: 'القاهرة', area: 'مدينة نصر', name: 'فرع مدينة نصر', address: '١٥ شارع عباس العقاد، مدينة نصر', hours: 'يوميًا 9 ص - 11 م', phone: '01022223704', services: ['إطارات', 'بطاريات', 'ترصيص', 'ضبط زوايا'] },
+  { id: 'br2', gov: 'القاهرة', area: 'المعادي', name: 'فرع المعادي', address: '٢٨ شارع ٩، المعادي', hours: 'يوميًا 9 ص - 11 م', phone: '01022223704', services: ['إطارات', 'بطاريات', 'زيوت'] },
+  { id: 'br3', gov: 'القاهرة', area: 'مصر الجديدة', name: 'فرع مصر الجديدة', address: '٤٠ شارع الميرغني، مصر الجديدة', hours: 'يوميًا 9 ص - 11 م', phone: '01022223704', services: ['إطارات', 'بطاريات', 'ترصيص'] },
+  { id: 'br4', gov: 'الجيزة', area: 'المهندسين', name: 'فرع المهندسين', address: '١٢ شارع شهاب، المهندسين', hours: 'يوميًا 9 ص - 11 م', phone: '01022223704', services: ['إطارات', 'بطاريات'] },
+  { id: 'br5', gov: 'الجيزة', area: 'أكتوبر', name: 'فرع ٦ أكتوبر', address: 'المحور المركزي، الحي الثاني، ٦ أكتوبر', hours: 'يوميًا 9 ص - 12 م', phone: '01022223704', services: ['إطارات', 'بطاريات', 'ترصيص', 'ضبط زوايا'] },
+  { id: 'br6', gov: 'الإسكندرية', area: 'سموحة', name: 'فرع سموحة', address: '٧ شارع فيكتور عمانويل، سموحة', hours: 'يوميًا 9 ص - 11 م', phone: '01022223704', services: ['إطارات', 'بطاريات', 'زيوت'] },
+  { id: 'br7', gov: 'الدقهلية', area: 'المنصورة', name: 'فرع المنصورة', address: 'شارع الجمهورية، المنصورة', hours: 'يوميًا 9 ص - 10 م', phone: '01022223704', services: ['إطارات', 'بطاريات'] },
+  { id: 'br8', gov: 'الغربية', area: 'طنطا', name: 'فرع طنطا', address: 'شارع البحر، طنطا', hours: 'يوميًا 9 ص - 10 م', phone: '01022223704', services: ['إطارات', 'بطاريات'] },
 ];
 
 export const GOVERNORATES = [...new Set(BRANCHES.map((b) => b.gov))];
@@ -215,8 +214,8 @@ export function tireImg(t: Tire): string {
   return map[t.usage] ?? IMG.tire1;
 }
 
-export const WHATSAPP_URL = 'https://wa.me/201001234567';
-export const PHONE_NUMBER = '١٦٢٣٤';
+export const WHATSAPP_URL = 'https://wa.me/201022223704';
+export const PHONE_NUMBER = '٠١٠٢٢٢٢٣٧٠٤';
 export const SOCIAL = {
   facebook: 'https://www.facebook.com/emadgadtyres',
   instagram: 'https://www.instagram.com/emadgadtyre?stkn=MWM4cjV0OHR3czZhag==',

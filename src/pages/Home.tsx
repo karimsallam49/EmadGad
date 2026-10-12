@@ -7,7 +7,6 @@ import LazySection from '@/components/LazySection';
 const TireShop = lazy(() => import('@/components/TireShop'));
 const BatterySection = lazy(() => import('@/components/BatterySection'));
 const CategoryProducts = lazy(() => import('@/components/CategoryProducts'));
-const ServicesGrid = lazy(() => import('@/components/Services'));
 const MobileService = lazy(() =>
   import('@/components/Services').then((m) => ({ default: m.MobileService })),
 );
@@ -57,9 +56,6 @@ export default function Home() {
           subtitle="قطع غيار أصلية بالضمان من مخزون الفروع."
           tone="white"
         />
-      </LazySection>
-      <LazySection minH={380}>
-        <ServicesGrid />
       </LazySection>
       <LazySection minH={500}>
         <MobileService />

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { MapPin, ShieldCheck, Star, Timer, Wallet, Wrench } from 'lucide-react';
+import { ExternalLink, MapPin, Share2, ShieldCheck, Star, Timer, Wallet, Wrench } from 'lucide-react';
+import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BRANCHES, BRAND_STRIP, REVIEWS } from '@/data';
 import { useBusinessLocations } from '@/hooks/use-business-locations';
 import { useAvailablePaymentMethods } from '@/hooks/use-available-payment-methods';
@@ -182,6 +184,29 @@ export function BranchFinder() {
   }, [branches, branchId]);
 
   const branch = branches.find((b) => b.id === branchId);
+  const [mapOpen, setMapOpen] = useState(false);
+
+  const mapsUrl =
+    branch?.lat != null && branch?.lng != null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${branch.lat},${branch.lng}`
+      : `https://maps.google.com/?q=${encodeURIComponent(branch?.name ?? '')}`;
+  const embedUrl =
+    branch?.lat != null && branch?.lng != null
+      ? `https://maps.google.com/maps?q=${branch.lat},${branch.lng}&z=15&hl=${isAr ? 'ar' : 'en'}&output=embed`
+      : `https://maps.google.com/maps?q=${encodeURIComponent(branch?.name ?? '')}&hl=${isAr ? 'ar' : 'en'}&output=embed`;
+
+  const shareLocation = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: branch?.name, url: mapsUrl });
+      } else {
+        await navigator.clipboard.writeText(mapsUrl);
+        toast.success(t('تم نسخ رابط الموقع'));
+      }
+    } catch {
+      /* user dismissed the share sheet */
+    }
+  };
 
   return (
     <section id="branches" className="bg-paper">
@@ -212,6 +237,7 @@ export function BranchFinder() {
           </div>
 
           {branch && (
+            <>
             <article className="rounded-2xl border-2 border-ink bg-white overflow-hidden shadow-[0_8px_0_#f6c744]">
               {branch.image && (
                 <img src={branch.image} alt={branch.name} loading="lazy" className="h-44 w-full object-cover" />
@@ -248,18 +274,47 @@ export function BranchFinder() {
                     </span>
                   )}
                 </div>
-                <a
-                  href={branch.lat != null && branch.lng != null
-                    ? `https://www.google.com/maps/dir/?api=1&destination=${branch.lat},${branch.lng}`
-                    : `https://maps.google.com/?q=${encodeURIComponent(branch.name)}`}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={() => setMapOpen(true)}
                   className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-coal text-brand h-12 text-base font-black hover:bg-coal-soft transition-colors"
                 >
                   <MapPin className="h-5 w-5" /> {t('الاتجاهات على الخريطة')}
-                </a>
+                </button>
               </div>
             </article>
+
+            <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-black">{branch.name}</DialogTitle>
+                </DialogHeader>
+                <iframe
+                  src={embedUrl}
+                  title={`${branch.name} map`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                  className="aspect-[4/3] w-full rounded-xl border-2 border-border bg-muted"
+                />
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={shareLocation}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-ink bg-white text-ink h-12 text-base font-black hover:bg-muted transition-colors"
+                  >
+                    <Share2 className="h-5 w-5" /> {t('شارك الموقع')}
+                  </button>
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-coal text-brand h-12 text-base font-black hover:bg-coal-soft transition-colors"
+                  >
+                    <ExternalLink className="h-5 w-5" /> {t('افتح في خرائط جوجل')}
+                  </a>
+                </div>
+              </DialogContent>
+            </Dialog>
+            </>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Check, MapPin } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useLang } from '@/i18n';
 import { ServiceIcon } from '@/components/art';
 import type { ServiceModel } from '@/lib/api';
@@ -8,7 +8,6 @@ export function ServiceStep({
   isLoading,
   serviceId,
   setServiceId,
-  serviceBranch,
   serviceIds,
   onToggleService,
 }: {
@@ -63,11 +62,6 @@ export function ServiceStep({
                 {s.duration ?? ''}
                 {s.priceFrom ? ` • ${isAr ? 'من' : 'from'} ${fmt(s.priceFrom)}` : ''}
               </span>
-              {serviceBranch?.(s.id) && (
-                <span className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-ink-mute">
-                  <MapPin className="h-3 w-3 shrink-0" /> {t('هيتنفذ في')} {serviceBranch(s.id)}
-                </span>
-              )}
             </span>
           </button>
         ))}

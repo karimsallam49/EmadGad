@@ -12,15 +12,27 @@ function extractList(raw: unknown): Tire[] {
   return (Array.isArray(arr) ? arr : []).map((p) => toTire(p as any));
 }
 
-function ProductGrid({ title, titleSuffix, subtitle, items }: { title: string; titleSuffix?: string; subtitle: string; items: Tire[] }) {
+function ProductGrid({ title, titleSuffix, items, brandLogo }: { title: string; titleSuffix?: string; subtitle?: string; items: Tire[]; brandLogo?: string | null }) {
   const { t } = useLang();
   return (
     <div className="bg-paper py-10 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <h1 className="text-3xl sm:text-4xl font-black text-ink">
-          {t(title)}{titleSuffix ? ` ${titleSuffix}` : ''}
-        </h1>
-        <p className="mt-2 text-lg font-bold text-ink-mute">{t(subtitle)}</p>
+        {brandLogo ? (
+          <div className="flex items-center gap-4 sm:gap-6 rounded-2xl border-2 border-ink bg-white p-5 sm:p-6 shadow-[0_8px_0_#f6c744]">
+            <span className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 border-border bg-[#ffffff] p-2.5">
+              <img src={brandLogo} alt={titleSuffix ?? title} className="max-h-full max-w-full object-contain" />
+            </span>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-ink">
+                {t(title)}{titleSuffix ? ` ${titleSuffix}` : ''}
+              </h1>
+            </div>
+          </div>
+        ) : (
+          <h1 className="text-3xl sm:text-4xl font-black text-ink">
+            {t(title)}{titleSuffix ? ` ${titleSuffix}` : ''}
+          </h1>
+        )}
 
         {items.length > 0 ? (
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -88,12 +100,16 @@ function EcomProducts({
     );
   }
 
+  const items = extractList((data as any)?.data ?? data);
+  const brandLogo = items.find((i) => i.brandPhoto)?.brandPhoto ?? null;
+
   return (
     <ProductGrid
       title={title ?? 'إطارات تناسب عربيتك'}
       titleSuffix={titleSuffix}
       subtitle={subtitle ?? 'نتائج مباشرة من مخزون الفروع'}
-      items={extractList((data as any)?.data ?? data)}
+      items={items}
+      brandLogo={deviceBrandId ? brandLogo : null}
     />
   );
 }

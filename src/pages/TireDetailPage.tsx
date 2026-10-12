@@ -6,7 +6,7 @@ import { useWhatsappUrl } from '@/hooks/use-social-media';
 import { useCart } from '@/cart';
 import { useLang } from '@/i18n';
 import { WhatsAppIcon } from '@/components/art';
-import { Stars, TireCard, toTire } from '@/components/TireShop';
+import { TireCard, toTire } from '@/components/TireShop';
 import { NotifyMeButton } from '@/components/NotifyMeButton';
 import { ProductOffers } from '@/components/ProductOffers';
 import { useProduct } from '@/hooks/use-product';
@@ -97,7 +97,6 @@ export default function TireDetailPage() {
             </Link>
             <div className="mt-2 flex items-center gap-3">
               <p className="text-lg font-extrabold text-ink-mute">{tire.brand}</p>
-              <Stars n={tire.rating} />
             </div>
             <h1 className="mt-1 text-3xl sm:text-4xl font-black text-ink">{tire.model}</h1>
             <p className="mt-2 text-lg font-bold text-ink-mute">

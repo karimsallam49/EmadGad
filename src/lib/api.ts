@@ -1,5 +1,5 @@
 import { API_BASE, ENDPOINTS } from './endpoints';
-import { apiLog } from './api-debug';
+import { apiContext, apiDebugEnabled, apiInflight, apiLog } from './api-debug';
 import type * as DTO from '@/types/api';
 
 // Re-export the DTOs so the rest of the app can import from '@/lib/api'
@@ -43,11 +43,15 @@ export async function apiRequest<T = unknown>(
   }
 
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const hasBody = body !== undefined && body !== null;
 
+  // Only send Content-Type when there is a JSON body. Sending it on GETs turns
+  // every request into a CORS preflight, which is flaky on iOS/Safari when many
+  // requests fire at once (and the server replies Access-Control-Max-Age: 0).
   const headers: Record<string, string> = {
     Accept: 'application/json',
   };
-  if (!isFormData) {
+  if (hasBody && !isFormData) {
     headers['Content-Type'] = 'application/json';
   }
   if (authToken) {
@@ -55,25 +59,58 @@ export async function apiRequest<T = unknown>(
   }
 
   const t0 = performance.now();
-  apiLog({ phase: 'start', method, url });
+  apiLog({ phase: 'start', method, url, detail: apiContext() });
+
+  const init: RequestInit = {
+    method,
+    headers,
+    credentials: 'omit',
+    body: !hasBody ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
+  };
+
+  const doFetch = async () => {
+    apiInflight(1);
+    try {
+      return await fetch(url, init);
+    } finally {
+      apiInflight(-1);
+    }
+  };
+
+  /** Failure forensics: is the network up (opaque no-cors probe) → CORS/preflight vs. connectivity */
+  const probe = async (err: unknown) => {
+    const name = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    apiLog({ phase: 'network-error', method, url, ms: performance.now() - t0, detail: `${name} | ${apiContext()}` });
+    if (!apiDebugEnabled()) return;
+    const origin = new URL(url, window.location.href).origin;
+    const p0 = performance.now();
+    try {
+      await fetch(`${origin}/?_probe=${Date.now()}`, { mode: 'no-cors', cache: 'no-store', credentials: 'omit' });
+      apiLog({ phase: 'probe', method: 'GET', url: origin, ms: performance.now() - p0, detail: 'origin REACHABLE (no-cors) → server/network OK, failure is CORS/preflight/request-specific' });
+    } catch (pe) {
+      apiLog({ phase: 'probe', method: 'GET', url: origin, ms: performance.now() - p0, detail: `origin UNREACHABLE → ${pe instanceof Error ? pe.message : String(pe)} (DNS/TLS/connectivity/blocked)` });
+    }
+  };
 
   let res: Response;
   try {
-    res = await fetch(url, {
-      method,
-      headers,
-      credentials: 'same-origin',
-      body: body === undefined || body === null
-        ? undefined
-        : isFormData
-          ? (body as FormData)
-          : JSON.stringify(body),
-    });
+    res = await doFetch();
   } catch (e) {
-    // fetch rejected — CORS block, offline, DNS, or mixed-content block on mobile
-    const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-    apiLog({ phase: 'network-error', method, url, ms: performance.now() - t0, detail });
-    throw e;
+    // fetch rejected — CORS block, offline, DNS, or a cancelled request (Safari).
+    // GETs are idempotent, so retry once after a short pause before giving up.
+    if (method === 'GET') {
+      apiLog({ phase: 'retry', method, url, ms: performance.now() - t0, detail: `${e instanceof Error ? `${e.name}: ${e.message}` : String(e)} | ${apiContext()}` });
+      await new Promise((r) => setTimeout(r, 400));
+      try {
+        res = await doFetch();
+      } catch (e2) {
+        await probe(e2);
+        throw e2;
+      }
+    } else {
+      await probe(e);
+      throw e;
+    }
   }
 
   const ms = performance.now() - t0;
@@ -119,7 +156,14 @@ export async function apiRequest<T = unknown>(
       err.statusText = res.statusText;
       throw err;
     }
-    apiLog({ phase: 'ok', method, url, status: res.status, ms });
+    apiLog({
+      phase: 'ok',
+      method,
+      url,
+      status: res.status,
+      ms,
+      detail: ms > 3000 ? `SLOW ${apiContext()}` : undefined,
+    });
     return json;
   } catch (e) {
     if ((e as ApiError).status !== undefined) throw e;
@@ -308,6 +352,13 @@ export async function getCustomerLoyalty(id: number) {
   return api.get<DTO.LoyaltyPointsModel>(ENDPOINTS.customerLoyalty(id));
 }
 
+/** GET /connector/api/customer/booking — the logged-in customer's bookings (auth) */
+export async function getCustomerBookings(): Promise<DTO.CustomerBookingModel[]> {
+  const res = await api.get<DTO.CustomerBookingModel[]>(ENDPOINTS.customerBookings);
+  const raw = res as unknown as { data?: DTO.CustomerBookingModel[] } | DTO.CustomerBookingModel[];
+  return Array.isArray(raw) ? raw : (raw.data ?? []);
+}
+
 // ==================== Public catalogues ====================
 
 export async function getTires(query?: { size?: string; brand?: string; usage?: string }) {
@@ -451,9 +502,25 @@ export async function getEcomProductsInfinite(query: {
 
 export async function updateCustomerBasicInfo(
   id: number,
-  body: { first_name: string; last_name: string; mobile: string }
+  body: { first_name: string; last_name: string; mobile: string; email?: string }
 ) {
   return api.put<DTO.CustomerInfoModel>(ENDPOINTS.customerBasicInfo(id), body);
+}
+
+/** GET connector/api/customer/joborder — the logged-in customer's workshop job orders (auth) */
+export async function getCustomerJobOrders() {
+  const res = await api.get<DTO.CustomerJobOrderModel[]>(ENDPOINTS.customerJobOrders);
+  const raw = res as unknown;
+  return (Array.isArray(raw)
+    ? raw
+    : ((raw as { data?: DTO.CustomerJobOrderModel[] }).data ?? [])) as DTO.CustomerJobOrderModel[];
+}
+
+/** GET contact/check/phone/joborder — verifies the last 4 digits of the customer's
+ *  mobile and returns the job-order details + media (auth) */
+export async function checkJobOrderPhone(id: number, phone: string) {
+  const res = await api.get<DTO.JobOrderPhoneCheckModel>(ENDPOINTS.jobOrderPhoneCheck, { id, phone });
+  return res as unknown as DTO.JobOrderPhoneCheckModel;
 }
 
 export async function getServices(query?: { location_id?: number }) {
@@ -580,6 +647,13 @@ export async function getAboutUs() {
   return api.get<DTO.AboutUsModel>(ENDPOINTS.aboutUs);
 }
 
+/** GET connector/api/legal-pages/{slug} — public; `data` is an array with one element (or empty) */
+export async function getLegalPage(slug: DTO.LegalSlug) {
+  const res = await api.get<DTO.LegalPageModel[]>(ENDPOINTS.legalPage(slug));
+  const raw = res as unknown as { data?: DTO.LegalPageModel[] };
+  return raw.data?.[0] ?? null;
+}
+
 /** Public — active social-media links for the business (sorted by sort_order) */
 export async function getSocialMedia(businessId = 1) {
   const res = await api.get<DTO.SocialMediaModel[]>(ENDPOINTS.ecomSocialMedia, {
@@ -587,6 +661,14 @@ export async function getSocialMedia(businessId = 1) {
   });
   const raw = res as unknown as { data?: DTO.SocialMediaModel[] };
   return raw.data ?? [];
+}
+
+/** Public — GA measurement ID + Facebook pixel ID configured for the business */
+export async function getEcomTracking(businessId = 1) {
+  const res = await api.get<DTO.TrackingSettingsModel>(ENDPOINTS.ecomTracking, {
+    business_id: businessId,
+  });
+  return (res.data ?? null) as DTO.TrackingSettingsModel | null;
 }
 
 // ==================== Chat ====================
@@ -787,17 +869,23 @@ export async function calculateDeliveryFee(query: {
   return (res.data ?? { delivery_charge: 0 }) as { delivery_charge: number };
 }
 
-/** POST ecommerce/orders — create the order; prices/discounts computed server-side (auth) */
-export async function createEcomOrder(body: DTO.CreateEcomOrderBody) {
+/** POST ecommerce/orders — create the order; prices/discounts computed server-side (auth).
+ *  When a digital gateway is active the response carries `payment` with a ready payment_url —
+ *  a 422 `payment_not_available` means the gateway is off and no order was created. */
+export async function createEcomOrder(body: DTO.CreateEcomOrderBody): Promise<DTO.CreateEcomOrderResult> {
   const res = await api.post<DTO.EcomOrderModel>(ENDPOINTS.ecomOrders, body);
   const raw = res as DTO.ApiResponse<DTO.EcomOrderModel> & {
     order?: DTO.EcomOrderModel;
+    payment?: DTO.EcomPaymentInitModel | null;
     msg?: string;
   };
   if (raw.success === false) {
     throw new Error(raw.msg ?? raw.message ?? 'فشل إنشاء الطلب');
   }
-  return (raw.order ?? raw.data) as DTO.EcomOrderModel;
+  return {
+    order: (raw.order ?? raw.data) as DTO.EcomOrderModel,
+    payment: (raw.payment ?? null) as DTO.EcomPaymentInitModel | null,
+  };
 }
 
 /** GET ecommerce/orders — the contact's orders, paginated (auth) */

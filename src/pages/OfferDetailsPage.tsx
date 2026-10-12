@@ -71,6 +71,27 @@ export default function OfferDetailsPage() {
     .map((b) => b.location?.name)
     .filter((n): n is string => !!n);
 
+  const comboRows = (offer.combo_items ?? []).map((ci, i) => {
+    const p = products[i];
+    const unitPrice =
+      Number(
+        ci.variation?.sell_price_inc_tax ??
+          ci.variation?.default_sell_price ??
+          ci.product?.default_sell_price ??
+          ci.product?.sell_price ??
+          0,
+      ) || productPrice(p);
+    const qty = Number(ci.quantity) || 1;
+    return { ci, unitPrice, qty, lineTotal: unitPrice * qty, product: p };
+  });
+  const comboTotal = comboRows.reduce((s, r) => s + r.lineTotal, 0);
+  const comboTotalAfter =
+    isCombo && discType && discValue != null
+      ? discType === 'percentage'
+        ? comboTotal * (1 - Number(discValue) / 100)
+        : Math.max(0, comboTotal - Number(discValue))
+      : comboTotal;
+
   return (
     <div className="bg-paper min-h-screen">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
@@ -120,28 +141,36 @@ export default function OfferDetailsPage() {
                   <PackageCheck className="h-5 w-5" /> {t('المنتجات المطلوبة للعرض')}
                 </h2>
                 <ul className="mt-3 divide-y divide-border rounded-xl border-2 border-border">
-                  {offer.combo_items.map((ci, i) => {
-                    const p = products[i];
+                  {comboRows.map(({ ci, unitPrice, qty, lineTotal, product: p }) => {
                     const name = ci.product?.name ?? ci.product_name ?? p?.name ?? `#${ci.product_id}`;
                     const varName = ci.variation_name ?? ci.variation?.name;
-                    const price = Number(
-                      ci.variation?.sell_price_inc_tax ??
-                        ci.variation?.default_sell_price ??
-                        ci.product?.default_sell_price ??
-                        ci.product?.sell_price ??
-                        0,
-                    ) || productPrice(p);
                     return (
                       <li key={`${ci.product_id}-${ci.variation_id ?? 0}`} className="flex items-center justify-between gap-3 px-4 py-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-black text-ink">{name}{varName ? ` — ${varName}` : ''}</p>
-                          <p className="text-xs font-bold text-ink-mute">{t('الكمية')}: {num(Number(ci.quantity))}</p>
+                          <p className="text-xs font-bold text-ink-mute">
+                            {num(qty)} × {fmt(unitPrice)}
+                          </p>
                         </div>
-                        {price > 0 && <span className="shrink-0 text-sm font-black text-ink">{fmt(price)}</span>}
+                        {lineTotal > 0 && <span className="shrink-0 text-sm font-black text-ink">{fmt(lineTotal)}</span>}
                       </li>
                     );
                   })}
                 </ul>
+                {comboTotal > 0 && (
+                  <div className="mt-3 space-y-1.5 rounded-xl bg-muted/70 px-4 py-3">
+                    <div className="flex items-center justify-between text-sm font-bold text-ink-mute">
+                      <span>{t('الإجمالي قبل العرض')}</span>
+                      <span className="line-through">{fmt(comboTotal)}</span>
+                    </div>
+                    {comboTotalAfter < comboTotal && (
+                      <div className="flex items-center justify-between text-base font-black text-ink">
+                        <span>{t('الإجمالي بعد العرض')}</span>
+                        <span className="text-emerald-700 dark:text-emerald-400">{fmt(comboTotalAfter)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

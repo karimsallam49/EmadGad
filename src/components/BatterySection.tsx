@@ -44,14 +44,26 @@ export function ApiProductCard({
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center justify-between gap-2">
           {p.brand_name && <p className="text-sm font-extrabold text-ink-mute">{p.brand_name}</p>}
-          {p.brand_jobsheet_photo && (
+          {p.brand_jobsheet_photo && (typeof p.brand_id === 'number' ? (
+            <Link
+              to={`/products?business_id=1&device_brand_id=${p.brand_id}&brand_name=${encodeURIComponent(p.brand_name ?? '')}`}
+              title={`${t('منتجات')} ${p.brand_name ?? ''}`}
+            >
+              <img
+                src={p.brand_jobsheet_photo}
+                alt={p.brand_name ?? ''}
+                loading="lazy"
+                className="h-8 w-8 shrink-0 rounded-full border border-border bg-[#ffffff] object-contain hover:border-ink transition-colors"
+              />
+            </Link>
+          ) : (
             <img
               src={p.brand_jobsheet_photo}
               alt={p.brand_name ?? ''}
               loading="lazy"
               className="h-8 w-8 shrink-0 rounded-full border border-border bg-[#ffffff] object-contain"
             />
-          )}
+          ))}
         </div>
         <Link to={detailTo} className="mt-1 text-lg font-black text-ink hover:underline underline-offset-4">
           {p.name}

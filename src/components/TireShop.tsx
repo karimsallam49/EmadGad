@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Minus, Plus, Star } from 'lucide-react';
+import { ArrowLeft, Minus, Plus } from 'lucide-react';
 import { type Tire } from '@/data';
 import { useCart } from '@/cart';
 import { useLang } from '@/i18n';
@@ -48,7 +48,6 @@ export function toTire(p: EcomProductInfiniteModel & Record<string, any>): Tire 
     discountValue: Number(p.discount ?? 0) || undefined,
     discountType: p.discount_type ?? undefined,
     usage: 'يومي',
-    rating: 4,
     stock: qty <= 0 ? 'نفدت الكمية' : qty <= 5 ? 'كمية محدودة' : 'متوفر',
     qtyAvailable: qty,
     image: images[0],
@@ -68,21 +67,12 @@ export function productDetailPath(p: { id: string | number; categoryId?: number;
   return `${base}/${p.id}`;
 }
 
-export function Stars({ n }: { n: number }) {
-  const { isAr } = useLang();
-  return (
-    <span className="flex items-center gap-0.5" aria-label={isAr ? `تقييم ${n} من 5` : `${n} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} className={`h-3.5 w-3.5 ${i < n ? 'fill-brand text-brand-dark' : 'text-border'}`} />
-      ))}
-    </span>
-  );
-}
-
 export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string }) {
   const { add } = useCart();
   const { t, fmt, num, isAr } = useLang();
-  const [qty, setQty] = useState(4);
+  // tires default to a full set of 4; any other product starts at 1
+  const isTire = detailBase === '/tires' || tire.categoryId === 2217;
+  const [qty, setQty] = useState(isTire ? 4 : 1);
   const outOfStock = tire.qtyAvailable !== undefined && tire.qtyAvailable <= 0;
   const maxQty = tire.qtyAvailable && tire.qtyAvailable > 0 ? tire.qtyAvailable : 99;
   const detailTo = detailBase ? `${detailBase}/${tire.id}` : productDetailPath({ id: tire.id, categoryId: tire.categoryId });

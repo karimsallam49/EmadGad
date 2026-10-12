@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/auth';
 import { useIdleReady } from '@/hooks/use-idle-ready';
@@ -9,6 +10,9 @@ import {
   markNotificationRead,
 } from '@/lib/api';
 
+/** Live polling cadence — paused in unfocused tabs (react-query default) */
+const NOTIF_POLL = 15_000;
+
 export const notificationKeys = {
   all: ['user-notifications'] as const,
   list: () => [...notificationKeys.all, 'list'] as const,
@@ -18,12 +22,28 @@ export const notificationKeys = {
 export function useUnreadCount() {
   const { user } = useAuth();
   const idle = useIdleReady();
-  return useQuery({
+  const qc = useQueryClient();
+  const prev = useRef<number | null>(null);
+
+  const query = useQuery({
     queryKey: notificationKeys.unread(),
     queryFn: getUnreadNotificationCount,
     enabled: !!user && idle,
-    refetchInterval: 60_000,
+    refetchInterval: NOTIF_POLL,
   });
+
+  // Count went up → drop the cached list so the panel refetches
+  // (instantly if it's open, or on next open otherwise).
+  useEffect(() => {
+    const unread = query.data;
+    if (unread == null) return;
+    if (prev.current != null && unread > prev.current) {
+      qc.invalidateQueries({ queryKey: notificationKeys.list() });
+    }
+    prev.current = unread;
+  }, [query.data, qc]);
+
+  return query;
 }
 
 /** Cursor-paginated notification list — only runs while `enabled` (panel open) */
@@ -39,6 +59,7 @@ export function useUserNotifications(enabled: boolean) {
       return items[items.length - 1]?.id;
     },
     enabled: enabled && !!user,
+    refetchInterval: NOTIF_POLL,
   });
 }
 

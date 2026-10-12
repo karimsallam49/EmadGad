@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/auth';
@@ -6,6 +6,7 @@ import { CartProvider } from '@/cart';
 import { LanguageProvider } from '@/i18n';
 import { ThemeProvider } from '@/theme';
 import { queryClient } from '@/lib/query-client';
+import { initTracking, trackPageView } from '@/lib/tracking';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CartDrawer, MobileBottomNav, WhatsAppFloat } from '@/components/MobileNav';
@@ -35,12 +36,33 @@ const ProductsPage = lazy(() => import('@/pages/ProductsPage'));
 const TaxonomyPage = lazy(() => import('@/pages/TaxonomyPage'));
 const BlogListPage = lazy(() => import('@/pages/BlogListPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
+const LegalPage = lazy(() => import('@/pages/LegalPage'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
     if (!window.location.hash) window.scrollTo(0, 0);
   }, [pathname]);
+  return null;
+}
+
+function Tracking() {
+  const { pathname, search } = useLocation();
+  const first = useRef(true);
+
+  useEffect(() => {
+    void initTracking();
+  }, []);
+
+  useEffect(() => {
+    // The initial page view is already sent by the tracker init snippets.
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    trackPageView(pathname + search);
+  }, [pathname, search]);
+
   return null;
 }
 
@@ -53,6 +75,7 @@ export default function App() {
             <CartProvider>
               <SplashScreen />
               <ScrollToTop />
+              <Tracking />
               <div className="" >
                 <Header />
                 <main>
@@ -76,6 +99,10 @@ export default function App() {
                   <Route path="/taxonomy" element={<TaxonomyPage />} />
                   <Route path="/blog" element={<BlogListPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
+                  <Route path="/return-policy" element={<LegalPage doc="return" />} />
+                  <Route path="/terms" element={<LegalPage doc="terms" />} />
+                  <Route path="/cancellation-policy" element={<LegalPage doc="cancellation" />} />
+                  <Route path="/privacy-policy" element={<LegalPage doc="privacy" />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />

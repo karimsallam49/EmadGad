@@ -16,7 +16,15 @@ const NAV = [
   { label: 'البطاريات', to: '/batteries' },
   { label: 'احجز خدمة', to: '/booking' },
   { label: 'الأقسام', to: '/taxonomy' },
+  { label: 'العروض', to: '/offers' },
   { label: 'فروعنا', to: '/branches' },
+];
+
+const LEGAL_NAV = [
+  { label: 'سياسة الاسترجاع', to: '/return-policy' },
+  { label: 'الشروط والأحكام', to: '/terms' },
+  { label: 'سياسة الإلغاء', to: '/cancellation-policy' },
+  { label: 'سياسة الخصوصية', to: '/privacy-policy' },
 ];
 
 /** Arabic ⇄ English switcher */
@@ -103,16 +111,6 @@ export default function Header() {
             <ThemeToggle className="hidden sm:inline-flex" />
             <LangToggle className="hidden sm:inline-flex" />
 
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#25D366] text-white px-4 h-10 text-sm font-extrabold hover:opacity-90 transition-opacity"
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              {t('واتساب')}
-            </a>
-
             <NotificationBell />
 
             <Link
@@ -131,11 +129,19 @@ export default function Header() {
             {user ? (
               <Link
                 to="/profile"
-                className="inline-flex h-10 w-10 sm:w-auto sm:px-4 items-center justify-center gap-2 rounded-full bg-brand text-sm font-extrabold text-coal hover:bg-brand/90 transition-colors"
+                className="relative inline-flex h-10 w-10 sm:w-auto sm:px-4 items-center justify-center gap-2 rounded-full bg-brand text-sm font-extrabold text-coal hover:bg-brand/90 transition-colors"
                 title={t('حسابي')}
               >
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline max-w-24 truncate">{user.name}</span>
+                {!user.email && (
+                  <span
+                    className="absolute -top-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-black text-white border-2 border-white"
+                    title={t('كمّل بياناتك')}
+                  >
+                    !
+                  </span>
+                )}
               </Link>
             ) : (
               <Link
@@ -176,6 +182,21 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className={({ isActive }) =>
                         `px-4 py-3.5 rounded-xl text-base font-bold ${isActive ? 'bg-coal text-brand' : 'hover:bg-brand-light'}`
+                      }
+                    >
+                      {t(item.label)}
+                    </NavLink>
+                  ))}
+                  <p className="mt-2 border-t border-border px-4 pt-3 text-xs font-black uppercase tracking-widest text-ink-mute">
+                    {t('قانوني')}
+                  </p>
+                  {LEGAL_NAV.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `px-4 py-2.5 rounded-xl text-sm font-bold ${isActive ? 'bg-coal text-brand' : 'hover:bg-brand-light'}`
                       }
                     >
                       {t(item.label)}

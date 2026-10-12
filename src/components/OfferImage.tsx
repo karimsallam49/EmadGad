@@ -12,10 +12,16 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from '@/components/ui/carousel';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import InstagramEmbed from './InstagramEmbed';
 import type { OfferModel } from '@/types/api';
 
-import { Image as ImageIcon, Play, Video } from 'lucide-react';
+import { Image as ImageIcon, Maximize2, Play, Video } from 'lucide-react';
 
 const isVideoUrl = (u?: string | null) => !!u && /\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i.test(u);
 const isInstagramUrl = (u?: string | null) => !!u && /instagram\.com\/(reel|p|tv)\//i.test(u);
@@ -30,6 +36,7 @@ function OfferSlide({ offer, active }: { offer: OfferModel; active: boolean }) {
   const idle = useIdleReady();
   const [showImageFirst, setShowImageFirst] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const video = isAr ? offer.video_ar : offer.video_en;
@@ -67,30 +74,40 @@ function OfferSlide({ offer, active }: { offer: OfferModel; active: boolean }) {
           allowFullScreen
         />
       ) : (
-        <video
-          src={videoUrl}
-          poster={imageUrl}
-          className="h-full w-full object-cover"
-          loop
-          playsInline
-          muted
-          autoPlay
-          preload="auto"
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          ref={(el) => {
-            videoRef.current = el;
-            if (el) el.play().catch(() => {});
-          }}
-        />
+        <>
+          <video
+            src={videoUrl}
+            poster={imageUrl}
+            className="h-full w-full cursor-pointer object-cover"
+            loop
+            playsInline
+            muted
+            autoPlay
+            preload="auto"
+            onClick={() => setVideoOpen(true)}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            ref={(el) => {
+              videoRef.current = el;
+              if (el) el.play().catch(() => {});
+            }}
+          />
+          {playing && (
+            <button
+              type="button"
+              onClick={() => setVideoOpen(true)}
+              className="absolute bottom-3 end-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
+              aria-label={t('عرض الفيديو')}
+            >
+              <Maximize2 className="h-5 w-5" />
+            </button>
+          )}
+        </>
       )}
       {!isLink && !isIg && !playing && (
         <button
           type="button"
-          onClick={() => {
-            setPlaying(true);
-            videoRef.current?.play().catch(() => {});
-          }}
+          onClick={() => setVideoOpen(true)}
           className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 transition hover:bg-black/10"
           aria-label={t('تشغيل الفيديو')}
         >
@@ -98,6 +115,23 @@ function OfferSlide({ offer, active }: { offer: OfferModel; active: boolean }) {
             <Play className="h-6 w-6 fill-current" />
           </span>
         </button>
+      )}
+      {isDirectVideo && videoUrl && (
+        <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
+          <DialogContent className="overflow-hidden border-none bg-black p-0 sm:max-w-3xl">
+            <DialogTitle className="sr-only">{title ?? t('عرض الفيديو')}</DialogTitle>
+            <DialogDescription className="sr-only">{t('عرض الفيديو')}</DialogDescription>
+            <video
+              key={videoUrl}
+              src={videoUrl}
+              poster={imageUrl}
+              className="max-h-[80vh] w-full"
+              controls
+              autoPlay
+              playsInline
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   ) : null;

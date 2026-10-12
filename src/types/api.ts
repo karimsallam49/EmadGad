@@ -64,7 +64,71 @@ export interface CustomerInfoModel {
   last_name?: string;
   name?: string;
   mobile: string;
+  email?: string | null;
   cars: CustomerCarModel[];
+}
+
+// ==================== Customer Job Orders (workshop) ====================
+
+/** GET connector/api/customer/joborder — bare array, one row per open job order */
+export interface CustomerJobOrderModel {
+  id: number;
+  job_sheet_no?: string;
+  business_id?: number;
+  location_id?: number;
+  brand?: string | null;
+  model?: string | null;
+  color?: string | null;
+  plate_number?: string | null;
+  manufacturing_year?: string | null;
+  workshop?: string | null;
+  location?: string | null;
+  country_code?: string | null;
+  currency_code?: string | null;
+  currency_symbol?: string | null;
+}
+
+/** `dataofcar` block inside the phone-check response */
+export interface JobOrderCarModel {
+  name?: string | null;
+  mobile?: string | null;
+  /** the API returns this key with a trailing space */
+  'mobile '?: string | null;
+  color?: string | null;
+  plate_number?: string | null;
+  number?: string | null;
+  chassisNumber?: string | null;
+  year?: string | null;
+  model?: string | null;
+  catname?: string | null;
+  service?: string | null;
+  status?: number | string | null;
+  entry_date?: string | null;
+  due_date?: string | null;
+  booking_id?: number;
+  booking_start?: string | null;
+  job_sheet_no?: string | null;
+}
+
+/** GET contact/check/phone/joborder?id=&phone= — `success` is a message string, not a boolean */
+export interface JobOrderPhoneCheckModel {
+  success?: boolean | string;
+  dataofcar?: JobOrderCarModel | null;
+  booking_start?: string | null;
+  job_sheet_no?: string | null;
+  days?: number;
+  hours?: number;
+  minutes?: number;
+  seconds?: number;
+  job_order?: unknown[];
+  tagged_images?: unknown[];
+  booking_images?: unknown[];
+  videos?: unknown[];
+  status_id?: number;
+  token?: string;
+  country_code?: string | null;
+  currency_code?: string | null;
+  currency_symbol?: string | null;
 }
 
 export interface JobOrderModel {
@@ -91,6 +155,22 @@ export interface BookingModel {
   bookingNote: string;
   bookingStart: string;
   location: string;
+}
+
+/** GET /connector/api/customer/booking — the customer's own service bookings */
+export interface CustomerBookingModel {
+  id: number;
+  job_sheet_no?: string | null;
+  booking_status?: string | null;
+  /** hex color for the status, sent by the API (e.g. "#FF0000") */
+  color?: string | null;
+  plate_number?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  service?: string | null;
+  booking_note?: string | null;
+  booking_start?: string | null;
+  location?: string | null;
 }
 
 // ==================== Job Order Models ====================
@@ -721,6 +801,7 @@ export interface CategoryItemsNextLevelResponse {
 export interface TaxonomyModel {
   id: number;
   name: string;
+  name_en?: string | null;
   short_code?: string | null;
   vin_category_code?: string | null;
   parent_id: number;
@@ -752,6 +833,27 @@ export interface SocialMediaModel {
   name: string;
   icon_url?: string | null;
   link: string;
+}
+
+// ==================== Legal Pages ====================
+
+export type LegalSlug = 'terms' | 'return-policy' | 'cancellation-policy' | 'privacy-policy';
+
+/** GET connector/api/legal-pages/{slug} — bilingual title + plain-text content (public) */
+export interface LegalPageModel {
+  slug: LegalSlug;
+  title_en?: string;
+  title_ar?: string;
+  content_en?: string;
+  content_ar?: string;
+}
+
+// ==================== Tracking & Analytics ====================
+
+/** GET ecommerce/tracking?business_id — either field may be null/"" (tracker disabled) */
+export interface TrackingSettingsModel {
+  ga_measurement_id?: string | null;
+  facebook_pixel_id?: string | null;
 }
 
 // ==================== Chat / Notify-me / Notifications ====================
@@ -813,6 +915,8 @@ export interface CreateEcomOrderBody {
   contact_id: number;
   order_type?: EcomOrderType;
   payment_method?: string;
+  /** gateway redirects here after payment with ?flag=success|fail&token=... */
+  callback_url?: string;
   order_note?: string;
   products: EcomOrderProductInput[];
   location_id?: number;
@@ -829,6 +933,12 @@ export interface CreateEcomOrderBody {
   offer_reward_id?: number;
   redeem_points?: number;
   transaction_reference?: string;
+}
+
+/** POST ecommerce/orders result — `payment` is non-null only when a digital gateway was used */
+export interface CreateEcomOrderResult {
+  order: EcomOrderModel;
+  payment: EcomPaymentInitModel | null;
 }
 
 export interface EcomOrderItemModel {

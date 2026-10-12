@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { BadgeCheck, Building2, Check, Clock, CreditCard, Gift, LogIn, MapPin, Phone, Sparkles, Truck, User, Wallet } from 'lucide-react';
+import { BadgeCheck, Building2, Check, Clock, CreditCard, Gift, Loader2, LogIn, MapPin, Phone, RotateCcw, Sparkles, Truck, User, Wallet, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BRANCHES, SHIPPING_FEE } from '@/data';
 import { useWhatsappUrl } from '@/hooks/use-social-media';
@@ -29,6 +29,148 @@ interface PlacedOrder {
   paymentInit: EcomPaymentInitModel | null;
 }
 
+/** Stashed before redirecting to the gateway webview, so the ?flag=... return has context */
+const PENDING_PAYMENT_KEY = 'emadgad-pending-payment';
+interface PendingPayment {
+  order_id: number;
+  order_no?: string;
+  payment_id?: number;
+  gateway?: string;
+}
+
+function readGatewayReturn(): { flag: string; pending: PendingPayment | null } | null {
+  const params = new URLSearchParams(window.location.search);
+  const flag = params.get('flag');
+  if (flag !== 'success' && flag !== 'fail') return null;
+  let pending: PendingPayment | null = null;
+  try {
+    pending = JSON.parse(sessionStorage.getItem(PENDING_PAYMENT_KEY) ?? 'null');
+  } catch { /* malformed cache */ }
+  sessionStorage.removeItem(PENDING_PAYMENT_KEY);
+  window.history.replaceState(null, '', window.location.pathname);
+  return { flag, pending };
+}
+
+function goToGateway(url: string, info: PendingPayment) {
+  try {
+    sessionStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(info));
+  } catch { /* private mode — the return will just lack context */ }
+  window.location.assign(url);
+}
+
+function GatewayReturn({ flag, pending }: { flag: string; pending: PendingPayment | null }) {
+  const { t } = useLang();
+  const status = useEcomPaymentStatus(pending?.payment_id, !!pending?.payment_id);
+  const payMutation = usePayEcomOrder();
+  const [retryError, setRetryError] = useState<string | null>(null);
+
+  const paid =
+    flag === 'success' ||
+    status.data?.is_paid ||
+    status.data?.payment_status === 'paid';
+  const failed =
+    flag === 'fail' ||
+    status.data?.payment_status === 'failed' ||
+    status.data?.payment_status === 'payment_failed';
+
+  const retry = async () => {
+    if (!pending) return;
+    setRetryError(null);
+    try {
+      const init = await payMutation.mutateAsync({
+        id: pending.order_id,
+        gateway: pending.gateway,
+        channel: 'web',
+        callback_url: `${window.location.origin}/checkout`,
+      });
+      if (init?.payment_url) {
+        goToGateway(init.payment_url, { ...pending, payment_id: init.payment_id });
+      } else {
+        setRetryError(t('مش قادرين نبدأ الدفع دلوقتي — جرب تاني'));
+      }
+    } catch (e) {
+      setRetryError(e instanceof Error ? e.message : t('حصلت مشكلة — جرب تاني'));
+    }
+  };
+
+  return (
+    <div className="bg-paper min-h-[calc(100vh-80px)] w-full overflow-hidden">
+      <div className="mx-auto max-w-xl px-4 sm:px-6 py-16 text-center">
+        {paid ? (
+          <>
+            <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500">
+              <Check className="h-10 w-10 text-white" />
+            </span>
+            <h1 className="mt-6 text-3xl sm:text-4xl font-black text-ink">{t('تم الدفع بنجاح')}</h1>
+            {pending?.order_no && (
+              <p className="mt-3 text-lg font-semibold text-ink-mute">
+                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{pending.order_no}</span>
+              </p>
+            )}
+            <p className="mt-4 text-base font-semibold text-ink-mute">
+              {status.isFetching || status.isLoading
+                ? t('جاري انتظار تأكيد الدفع...')
+                : t('بنكلمك للتأكيد قبل أي خصم أو تركيب')}
+            </p>
+          </>
+        ) : failed ? (
+          <>
+            <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-500">
+              <X className="h-10 w-10 text-white" />
+            </span>
+            <h1 className="mt-6 text-3xl sm:text-4xl font-black text-ink">{t('الدفع مكملش')}</h1>
+            {pending?.order_no && (
+              <p className="mt-3 text-lg font-semibold text-ink-mute">
+                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{pending.order_no}</span>
+              </p>
+            )}
+            <p className="mt-4 text-base font-semibold text-ink-mute">
+              {t('الدفع فشل أو اتلغى — الطلب محفوظ وتقدر تحاول تاني')}
+            </p>
+            {pending && (
+              <button
+                type="button"
+                onClick={retry}
+                disabled={payMutation.isPending}
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-coal text-brand px-6 h-12 font-black disabled:opacity-40"
+              >
+                {payMutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-5 w-5" />
+                )}
+                {t('جرّب الدفع تاني')}
+              </button>
+            )}
+            {retryError && (
+              <p className="mt-3 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">{retryError}</p>
+            )}
+          </>
+        ) : (
+          <>
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-ink-mute" />
+            <p className="mt-4 text-base font-semibold text-ink-mute">{t('جاري انتظار تأكيد الدفع...')}</p>
+          </>
+        )}
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link
+            to="/profile"
+            className="inline-flex items-center rounded-xl border-2 border-ink px-6 h-12 font-black text-ink hover:bg-coal hover:text-brand transition-colors"
+          >
+            {t('شوف طلباتك')}
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center rounded-xl border-2 border-ink px-6 h-12 font-black text-ink hover:bg-coal hover:text-brand transition-colors"
+          >
+            {t('ارجع للرئيسية')}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   const { items, total, clear } = useCart();
   const { user } = useAuth();
@@ -53,6 +195,7 @@ export default function CheckoutPage() {
   const [orderNote, setOrderNote] = useState('');
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [gatewayReturn] = useState(readGatewayReturn);
 
   // ── API data ──
   const branchesQuery = useBranches();
@@ -248,6 +391,8 @@ export default function CheckoutPage() {
       contact_id: user.id,
       order_type: mode === 'branch' ? 'self_pickup' : 'delivery',
       payment_method: payment,
+      // the gateway redirects back here with ?flag=success|fail&token=...
+      callback_url: isOnlinePayment ? `${window.location.origin}/checkout` : undefined,
       products,
       order_note: orderNote.trim() || undefined,
       location_id: locationId,
@@ -267,9 +412,11 @@ export default function CheckoutPage() {
     };
 
     try {
-      const order = await createOrder.mutateAsync(body);
-      let paymentInit: EcomPaymentInitModel | null = null;
-      if (isOnlinePayment && order?.id) {
+      const { order, payment: inlinePayment } = await createOrder.mutateAsync(body);
+      // Newer backend embeds the ready payment in the order response;
+      // fall back to POST orders/{id}/pay when it's missing (older backend).
+      let paymentInit = inlinePayment;
+      if (!paymentInit && isOnlinePayment && order?.id) {
         try {
           paymentInit = await payMutation.mutateAsync({
             id: order.id,
@@ -285,9 +432,19 @@ export default function CheckoutPage() {
       clear();
       window.scrollTo(0, 0);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('فشل تسجيل الطلب، برجاء المحاولة مرة أخرى'));
+      const msg = err instanceof Error ? err.message : '';
+      setSubmitError(
+        /payment_not_available/i.test(msg)
+          ? t('الدفع أونلاين مش متاح دلوقتي — اختار طريقة تانية')
+          : msg || t('فشل تسجيل الطلب، برجاء المحاولة مرة أخرى'),
+      );
     }
   };
+
+  // ── gateway return (?flag=success|fail&token=...) ──
+  if (gatewayReturn) {
+    return <GatewayReturn flag={gatewayReturn.flag} pending={gatewayReturn.pending} />;
+  }
 
   // ── success screen ──
   if (placed) {
@@ -355,14 +512,20 @@ export default function CheckoutPage() {
                     {t('كمّل الدفع أونلاين')} {paymentInit.amount ? `— ${fmt(Number(paymentInit.amount))}` : ''}
                   </p>
                   {paymentUrl && (
-                    <a
-                      href={paymentUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() =>
+                        goToGateway(paymentUrl, {
+                          order_id: order.id,
+                          order_no: order.order_no,
+                          payment_id: paymentInit.payment_id,
+                          gateway: payment,
+                        })
+                      }
                       className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-coal text-brand px-6 h-12 font-black w-full"
                     >
                       <CreditCard className="h-5 w-5" /> {t('افتح صفحة الدفع')}
-                    </a>
+                    </button>
                   )}
                   <p className="mt-3 text-xs font-bold text-ink-mute">
                     {paymentStatus.isFetching || paymentStatus.isLoading

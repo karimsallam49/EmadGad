@@ -77,12 +77,21 @@ export default function Footer() {
         ? branchNames.map((n) => ({ l: n, to: '/branches' }))
         : [{ l: t('كل فروعنا'), to: '/branches' }],
     },
+    {
+      title: t('قانوني'),
+      links: [
+        { l: t('سياسة الاسترجاع'), to: '/return-policy' },
+        { l: t('الشروط والأحكام'), to: '/terms' },
+        { l: t('سياسة الإلغاء'), to: '/cancellation-policy' },
+        { l: t('سياسة الخصوصية'), to: '/privacy-policy' },
+      ],
+    },
   ];
 
   return (
     <footer className="bg-coal-soft text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-12 pb-24 lg:pb-12">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 lg:gap-8">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 lg:grid-cols-5 lg:gap-8">
           <div className="col-span-2 flex flex-col items-center text-center sm:items-start sm:text-start md:col-span-4 lg:col-span-1">
             <span className="inline-flex items-center bg-brand rounded-md px-3 py-2">
               <img src="/assets/logo-dark.webp" alt="EmadGad" width={290} height={64} loading="lazy" className="h-8 w-auto" />

@@ -8,6 +8,7 @@ import {
   Car,
   Check,
   ChevronLeft,
+  CircleAlert,
   Coins,
   Gauge,
   Gift,
@@ -15,6 +16,7 @@ import {
   Loader2,
   LogIn,
   LogOut,
+  Mail,
   Package,
   Pencil,
   Phone,
@@ -25,6 +27,7 @@ import {
   Store,
   Truck,
   User,
+  Wrench,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -39,6 +42,8 @@ import { useEcomLoyalty } from '@/hooks/use-ecom-loyalty';
 import { useEcomInvoice, useEcomInvoices } from '@/hooks/use-ecom-invoices';
 import { useAddCustomerCar } from '@/hooks/use-add-customer-car';
 import { useContactKm, useScanContactKm, useUpdateContactKm } from '@/hooks/use-contact-km';
+import { useCustomerBookings } from '@/hooks/use-customer-bookings';
+import { useCustomerJobOrders, useJobOrderPhoneCheck } from '@/hooks/use-customer-job-orders';
 import { useBrands } from '@/hooks/use-brands';
 import { useModels } from '@/hooks/use-models';
 import {
@@ -51,9 +56,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import type { CustomerCarModel, EcomOrderModel } from '@/types/api';
+import type { CustomerBookingModel, CustomerCarModel, CustomerJobOrderModel, EcomOrderModel } from '@/types/api';
 
-type Tab = 'info' | 'orders' | 'invoices' | 'alerts';
+type Tab = 'info' | 'orders' | 'bookings' | 'joborders' | 'invoices' | 'alerts';
 type OrderFilter = 'ongoing' | 'history';
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
@@ -80,6 +85,20 @@ const ORDER_STATUS_STYLE: Record<string, string> = {
   failed: 'bg-red-100 text-red-800 border-red-300',
   returned: 'bg-red-100 text-red-800 border-red-300',
   payment_failed: 'bg-red-100 text-red-800 border-red-300',
+};
+
+const BOOKING_STATUS_LABEL: Record<string, string> = {
+  request: 'طلبك وصلنا',
+  waiting: 'في انتظار التأكيد',
+  pending: 'في انتظار التأكيد',
+  booked: 'معادك محجوز',
+  confirmed: 'معادك محجوز',
+  pickup_request: 'طلب خدمة متنقلة',
+  in_progress: 'الخدمة شغالة',
+  completed: 'الخدمة خلصت',
+  done: 'الخدمة خلصت',
+  canceled: 'اتلغى',
+  cancelled: 'اتلغى',
 };
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
@@ -303,6 +322,329 @@ function OrdersTab() {
   );
 }
 
+/* ------------------------------ Bookings ------------------------------ */
+
+function BookingCard({ booking: b }: { booking: CustomerBookingModel }) {
+  const { t } = useLang();
+  const statusColor = b.color ?? '#6b7280';
+  const statusKey = (b.booking_status ?? '').toLowerCase().replace(/[\s-]+/g, '_');
+  const car = [b.brand, b.model].filter(Boolean).join(' ');
+
+  return (
+    <li className="rounded-2xl border-2 border-border bg-white p-4 sm:p-5 transition-colors hover:border-ink">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-black text-ink">
+            <Hash className="h-4 w-4 text-ink-mute" />
+            <span className="ltr">{b.job_sheet_no ?? `#${b.id}`}</span>
+          </p>
+          {b.booking_start && (
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-ink-mute">
+              <CalendarClock className="h-3.5 w-3.5" />
+              <span className="ltr">{b.booking_start}</span>
+            </p>
+          )}
+        </div>
+        <span
+          className="rounded-full border px-3 py-1 text-xs font-black"
+          style={{
+            color: statusColor,
+            borderColor: `${statusColor}66`,
+            backgroundColor: `${statusColor}1a`,
+          }}
+        >
+          {t(BOOKING_STATUS_LABEL[statusKey] ?? b.booking_status ?? 'حجز')}
+        </span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-3 text-sm font-bold text-ink-mute">
+        {b.service && (
+          <p className="flex items-center gap-1.5 font-black text-ink">
+            <Wrench className="h-4 w-4 text-ink-mute" />
+            {b.service}
+          </p>
+        )}
+        {car && (
+          <p className="flex items-center gap-1.5">
+            <Car className="h-4 w-4" />
+            <span className="ltr">
+              {car}
+              {b.plate_number ? ` • ${b.plate_number}` : ''}
+            </span>
+          </p>
+        )}
+        {b.location && (
+          <p className="flex items-center gap-1.5">
+            <Store className="h-4 w-4" />
+            {b.location}
+          </p>
+        )}
+      </div>
+
+      {b.booking_note && (
+        <p className="mt-3 rounded-xl bg-muted px-3 py-2 text-xs font-bold text-ink-mute">
+          {b.booking_note}
+        </p>
+      )}
+    </li>
+  );
+}
+
+function BookingsTab() {
+  const { t } = useLang();
+  const { data: bookings, isLoading } = useCustomerBookings();
+  const list = bookings ?? [];
+
+  return (
+    <section className={cardCls}>
+      <h2 className="flex items-center gap-2 text-xl font-black text-ink">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coal text-brand">
+          <CalendarClock className="h-5 w-5" />
+        </span>
+        {t('حجوزاتي')}
+      </h2>
+
+      {isLoading ? (
+        <SkeletonList />
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={CalendarClock}
+          title={t('مفيش حجوزات لسّه')}
+          hint={t('حجوزاتك بتظهر هنا أول ما تحجز خدمة')}
+          action={{ label: 'احجز خدمة', to: '/booking' }}
+        />
+      ) : (
+        <ul className="mt-5 space-y-3">
+          {list.map((b) => (
+            <BookingCard key={b.id} booking={b} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------ Job Orders (workshop) ------------------------------ */
+
+const validDate = (d?: string | null) => !!d && !d.startsWith('0000');
+
+/** Media items come back in loose shapes — pull a URL out of strings or {url/path/image/src} objects */
+const mediaUrl = (m: unknown): string | null => {
+  if (typeof m === 'string') return m || null;
+  if (m && typeof m === 'object') {
+    const o = m as Record<string, unknown>;
+    for (const k of ['url', 'image', 'src', 'path', 'file']) {
+      if (typeof o[k] === 'string' && o[k]) return o[k] as string;
+    }
+  }
+  return null;
+};
+
+function JobOrderCard({ order: o, onOpen }: { order: CustomerJobOrderModel; onOpen: () => void }) {
+  const { t } = useLang();
+  const car = [o.brand, o.model, o.manufacturing_year].filter(Boolean).join(' ');
+
+  return (
+    <li>
+      <button
+        onClick={onOpen}
+        className="w-full rounded-2xl border-2 border-border bg-white p-4 text-start transition-colors hover:border-ink"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 font-black text-ink">
+              <Hash className="h-4 w-4 text-ink-mute" />
+              <span className="ltr">{o.job_sheet_no ?? `#${o.id}`}</span>
+            </p>
+            {o.location && (
+              <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-ink-mute">
+                <Store className="h-3.5 w-3.5" />
+                {o.location}
+              </p>
+            )}
+          </div>
+          <span className="text-xs font-black text-ink underline">{t('التفاصيل')}</span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-3 text-sm font-bold text-ink-mute">
+          {car && (
+            <p className="flex items-center gap-1.5 font-black text-ink">
+              <Car className="h-4 w-4 text-ink-mute" />
+              <span className="ltr">{car}</span>
+            </p>
+          )}
+          {o.plate_number && (
+            <p className="flex items-center gap-1.5">
+              <span className="ltr">{o.plate_number}</span>
+            </p>
+          )}
+          {o.color && <p className="flex items-center gap-1.5">{o.color}</p>}
+        </div>
+      </button>
+    </li>
+  );
+}
+
+function JobOrderDetails({ id }: { id: number }) {
+  const { t, num } = useLang();
+  const { data, isLoading } = useJobOrderPhoneCheck(id);
+
+  if (isLoading) {
+    return <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-ink-mute" /></div>;
+  }
+  const car = data?.dataofcar;
+  if (!car) {
+    return <p className="py-8 text-center text-sm font-bold text-ink-mute">{t('مش قادرين نجيب تفاصيل أمر الشغل')}</p>;
+  }
+
+  const cell = (label: string, value?: string | number | null, ltr = true) =>
+    value == null || value === '' ? null : (
+      <div className="rounded-xl bg-muted/70 px-3 py-2.5">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-mute">{label}</p>
+        <p className={`mt-0.5 truncate font-black text-ink ${ltr ? 'ltr' : ''}`}>{value}</p>
+      </div>
+    );
+
+  const elapsed = [
+    { v: data?.days, l: 'يوم' },
+    { v: data?.hours, l: 'ساعة' },
+    { v: data?.minutes, l: 'دقيقة' },
+    { v: data?.seconds, l: 'ثانية' },
+  ].filter((e) => (e.v ?? 0) > 0);
+
+  const images = [...(data?.tagged_images ?? []), ...(data?.booking_images ?? [])]
+    .map(mediaUrl)
+    .filter((u): u is string => !!u);
+  const videos = (data?.videos ?? []).map(mediaUrl).filter((u): u is string => !!u);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {cell(t('المالك'), car.name, false)}
+        {cell(t('الموبايل'), car['mobile '] ?? car.mobile)}
+        {cell(t('الماركة'), car.catname)}
+        {cell(t('الموديل'), car.model)}
+        {cell(t('سنة الصنع'), car.year)}
+        {cell(t('اللون'), car.color)}
+        {cell(t('رقم اللوحة'), car.plate_number ?? car.number)}
+        {cell(t('الشاسيه'), car.chassisNumber)}
+        {cell(t('الحالة'), car.status ?? data?.status_id)}
+      </div>
+
+      {car.service && (
+        <div className="rounded-xl border-2 border-border px-4 py-3">
+          <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-mute">{t('الخدمة')}</p>
+          <p className="mt-0.5 font-black text-ink">{car.service}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {validDate(car.entry_date) && cell(t('تاريخ الدخول'), car.entry_date)}
+        {validDate(car.due_date) && cell(t('تاريخ الاستلام المتوقع'), car.due_date)}
+        {validDate(data?.booking_start ?? car.booking_start) &&
+          cell(t('موعد الحجز'), data?.booking_start ?? car.booking_start)}
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-black text-ink">{t('وقت التنفيذ')}</p>
+        <div className="flex flex-wrap gap-2">
+          {elapsed.length === 0 ? (
+            <span className="rounded-lg bg-muted px-3 py-2 text-sm font-bold text-ink-mute">{t('لسّه بدأ')}</span>
+          ) : (
+            elapsed.map((e) => (
+              <span key={e.l} className="rounded-lg bg-coal px-3 py-2 text-sm font-black text-brand">
+                <span className="ltr">{num(e.v ?? 0)}</span> {t(e.l)}
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
+      {images.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-black text-ink">{t('صور مرفقة')}</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {images.map((u, i) => (
+              <a key={i} href={u} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-border">
+                <img src={u} alt="" loading="lazy" className="aspect-square w-full object-cover" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {videos.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-black text-ink">{t('فيديوهات')}</p>
+          <ul className="space-y-2">
+            {videos.map((u, i) => (
+              <li key={i}>
+                <a
+                  href={u}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 rounded-xl border-2 border-border px-4 py-2.5 text-sm font-black text-ink transition-colors hover:border-ink"
+                >
+                  <Camera className="h-4 w-4 text-ink-mute" />
+                  <span className="truncate ltr">{u}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function JobOrdersTab() {
+  const { t } = useLang();
+  const { data, isLoading } = useCustomerJobOrders();
+  const [openId, setOpenId] = useState<number | null>(null);
+  const orders = data ?? [];
+  const openOrder = orders.find((o) => o.id === openId);
+
+  return (
+    <section className={cardCls}>
+      <h2 className="flex items-center gap-2 text-xl font-black text-ink">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coal text-brand">
+          <Wrench className="h-5 w-5" />
+        </span>
+        {t('أوامر الشغل')}
+      </h2>
+
+      {isLoading ? (
+        <SkeletonList />
+      ) : orders.length === 0 ? (
+        <EmptyState
+          icon={Wrench}
+          title={t('مفيش أوامر شغل')}
+          hint={t('أوامر شغل عربيتك هتظهر هنا لما تدخل الورشة')}
+        />
+      ) : (
+        <ul className="mt-5 space-y-3">
+          {orders.map((o) => (
+            <JobOrderCard key={o.id} order={o} onOpen={() => setOpenId(o.id)} />
+          ))}
+        </ul>
+      )}
+
+      <Dialog open={openId !== null} onOpenChange={(o) => !o && setOpenId(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              {t('أمر شغل')} <span className="ltr">{openOrder?.job_sheet_no ?? ''}</span>
+            </DialogTitle>
+            <DialogDescription className="sr-only">{t('تفاصيل أمر الشغل')}</DialogDescription>
+          </DialogHeader>
+          {openId !== null && <JobOrderDetails id={openId} />}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
 /* ------------------------------ Alerts ------------------------------ */
 
 function AlertsTab() {
@@ -513,8 +855,33 @@ function KmDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
 
 function KmDisplay() {
   const { t } = useLang();
+  const { user } = useAuth();
   const { data: km, isLoading } = useContactKm();
   const [open, setOpen] = useState(false);
+
+  if ((user?.cars?.length ?? 0) === 0) {
+    return (
+      <AddCarDialog
+        trigger={
+          <button className="group mt-5 flex w-full items-center justify-between gap-4 rounded-2xl border border-dashed border-white/20 bg-black/40 px-4 py-4 text-start transition-colors hover:border-brand/40">
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/45">
+                <Gauge className="h-3.5 w-3.5 text-brand" />
+                {t('عداد الكيلومترات')}
+              </p>
+              <p className="mt-2 flex items-center gap-1.5 text-sm font-black text-white/70 transition-colors group-hover:text-brand">
+                <Car className="h-4 w-4 text-brand" />
+                {t('ضيف عربيتك الأول عشان تسجّل قراءة العداد')}
+              </p>
+            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 text-white/50 transition-colors group-hover:border-brand/40 group-hover:text-brand">
+              <Plus className="h-4 w-4" />
+            </span>
+          </button>
+        }
+      />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -636,7 +1003,15 @@ function CarsStrip({ cars }: { cars: CustomerCarModel[] }) {
   );
 }
 
-function AddCarDialog({ fab = false, big = false }: { fab?: boolean; big?: boolean }) {
+function AddCarDialog({
+  fab = false,
+  big = false,
+  trigger,
+}: {
+  fab?: boolean;
+  big?: boolean;
+  trigger?: ReactNode;
+}) {
   const { t } = useLang();
   const { user, refreshUser } = useAuth();
   const addCar = useAddCustomerCar();
@@ -695,7 +1070,7 @@ function AddCarDialog({ fab = false, big = false }: { fab?: boolean; big?: boole
       }}
     >
       <DialogTrigger asChild>
-        {big ? (
+        {trigger ?? (big ? (
           <button className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink bg-brand/40 py-5 text-lg font-black text-ink transition-colors hover:bg-brand">
             <Plus className="h-6 w-6" strokeWidth={3} /> {t('أضف عربية')}
           </button>
@@ -713,7 +1088,7 @@ function AddCarDialog({ fab = false, big = false }: { fab?: boolean; big?: boole
           >
             <Plus className="h-5 w-5" />
           </button>
-        )}
+        ))}
       </DialogTrigger>
       <DialogContent className="rounded-2xl border-2 border-ink bg-white sm:max-w-md">
         <DialogHeader>
@@ -833,6 +1208,40 @@ function LoyaltyStat({ icon: Icon, children }: { icon: LucideIcon; children: Rea
   );
 }
 
+/** Car-style gauge — the km.png dial with a needle pointing at the balance */
+const GAUGE_MAX_POINTS = 15000; // matches the printed dial on km.png
+const GAUGE_PIVOT_Y = '57%'; // dial circle center within the image
+
+function PointsGauge({ value, label }: { value: number; label: string }) {
+  const pct = Math.min(1, Math.max(0, value / GAUGE_MAX_POINTS));
+  // dial sweeps ~240°: zero at bottom-left (150°), max at bottom-right (30°)
+  const deg = 150 + 240 * pct;
+  return (
+    <div className="relative w-full select-none" dir="ltr">
+      <img src="/assets/km.png" alt="" draggable={false} className="w-full" />
+      <div
+        aria-hidden
+        className="absolute h-[4px] w-[40%] rounded-full bg-gradient-to-r from-[#b8860b] to-[#f6c744]"
+        style={{
+          left: '50%',
+          top: GAUGE_PIVOT_Y,
+          transformOrigin: '0 50%',
+          transform: `rotate(${deg}deg) translateY(-50%)`,
+          boxShadow: '0 0 6px rgba(246,199,68,.55)',
+        }}
+      />
+      <span
+        aria-hidden
+        className="absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#b8860b] bg-[#f6c744]"
+        style={{ left: '50%', top: GAUGE_PIVOT_Y }}
+      />
+      <span className="absolute left-1/2 top-[64%] -translate-x-1/2 whitespace-nowrap rounded-full border border-brand/60 bg-black/85 px-3 py-1 text-xs font-black text-brand">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 function LoyaltyCard() {
   const { t, num, fmt } = useLang();
   const { user } = useAuth();
@@ -854,7 +1263,6 @@ function LoyaltyCard() {
 
   if (!loyalty?.enabled) return null;
 
-  const earnRate = loyalty.earn?.amount_per_point;
   const redeem = loyalty.redeem;
   const noPoints = !loyalty.balance;
   const lockedRedeem =
@@ -866,19 +1274,14 @@ function LoyaltyCard() {
     <section
       className="relative mt-5 overflow-hidden rounded-3xl border-2 border-ink shadow-[0_8px_0_#191919]"
       style={{
-        background: 'linear-gradient(135deg, #2a2a2a 0%, #191919 45%, #241d08 75%, #3a2f10 100%)',
+        background: 'linear-gradient(135deg, #1d1d1d 0%, #0a0a0a 60%, #000000 100%)',
       }}
     >
-      {/* gold glow blobs */}
+      {/* soft glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-24 -end-16 h-64 w-64 rounded-full opacity-25 blur-3xl"
-        style={{ background: 'radial-gradient(circle, #f6c744 0%, transparent 70%)' }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-28 -start-14 h-56 w-56 rounded-full opacity-15 blur-3xl"
-        style={{ background: 'radial-gradient(circle, #f6c744 0%, transparent 70%)' }}
+        className="pointer-events-none absolute -top-24 -end-16 h-64 w-64 rounded-full opacity-15 blur-3xl"
+        style={{ background: 'radial-gradient(circle, #ffffff 0%, transparent 70%)' }}
       />
       {/* subtle diagonal stripes */}
       <div
@@ -904,40 +1307,17 @@ function LoyaltyCard() {
           <Sparkles className="h-4 w-4" />
           {t(loyalty.points_name ?? 'نقاط المكافآت')}
         </p>
-        {/* gold chip */}
-        <span aria-hidden className="relative h-9 w-12 overflow-hidden rounded-md bg-gradient-to-br from-[#fde08a] via-[#f6c744] to-[#b8860b] shadow-[inset_0_1px_0_#ffffffaa,0_1px_2px_#00000066]">
-          <span className="absolute inset-x-0 top-1/2 h-px bg-coal/40" />
-          <span className="absolute inset-y-0 left-1/2 w-px bg-coal/40" />
-          <span className="absolute left-1/2 top-1/2 h-4 w-5 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-coal/40" />
-        </span>
       </div>
 
       {/* balance row */}
-      <div className="relative flex flex-wrap items-end gap-4 px-5 pb-5 pt-3 sm:px-7 sm:pb-7">
+      <div className="relative flex flex-col items-center gap-4 px-5 pb-5 pt-3 sm:flex-row sm:flex-wrap sm:items-end sm:px-7 sm:pb-7">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40">
+          <p className="text-center text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40 sm:text-start">
             {t('رصيدك الحالي')}
           </p>
-          <p className="mt-1.5 flex items-baseline gap-3">
-            <span
-              className="bg-gradient-to-b from-white via-[#fdf3d0] to-[#f6c744] bg-clip-text text-5xl font-black leading-none tracking-tight text-transparent sm:text-6xl"
-              style={{ filter: 'drop-shadow(0 2px 6px rgba(246,199,68,0.25))' }}
-            >
-              {num(loyalty.balance)}
-            </span>
-            <span className="text-sm font-black text-brand/70">{t('نقطة')}</span>
-          </p>
-
-          {/* member line */}
-          <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-extrabold uppercase tracking-widest text-white/45">
-            <span className="ltr tracking-[0.25em]">{user?.name ?? ''}</span>
-            {user?.mobile && (
-              <span className="inline-flex items-center gap-1.5">
-                <Phone className="h-3 w-3" />
-                <span className="ltr">{user.mobile}</span>
-              </span>
-            )}
-          </p>
+          <div className="mx-auto mt-2 w-48 sm:mx-0 sm:w-60">
+            <PointsGauge value={loyalty.balance} label={`${num(loyalty.balance)} ${t('نقطة')}`} />
+          </div>
         </div>
 
         {loyalty.redeemable_amount > 0 ? (
@@ -962,16 +1342,6 @@ function LoyaltyCard() {
 
       {/* bottom strip */}
       <div className="relative flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-brand/15 bg-black/50 px-5 py-3.5 backdrop-blur-sm sm:px-7">
-        {!!earnRate && (
-          <LoyaltyStat icon={Gift}>
-            {t('بتكسب نقطة لكل')} {fmt(earnRate)}
-            {!!loyalty.earn?.max_points_per_order && (
-              <span className="text-white/40">
-                ({t('لحد')} {num(loyalty.earn.max_points_per_order)} {t('للأوردر')})
-              </span>
-            )}
-          </LoyaltyStat>
-        )}
         {loyalty.redeemable_points > 0 && (
           <LoyaltyStat icon={Coins}>
             {t('استبدل لحد')} {num(loyalty.redeemable_points)} {t('نقطة في الأوردر')}
@@ -1025,22 +1395,38 @@ function InfoTab({
   const [firstName, setFirstName] = useState(user.first_name ?? user.name?.split(' ')[0] ?? '');
   const [lastName, setLastName] = useState(user.last_name ?? user.name?.split(' ').slice(1).join(' ') ?? '');
   const [mobile, setMobile] = useState(user.mobile ?? '');
+  const [email, setEmail] = useState(user.email ?? '');
   const [error, setError] = useState<string | null>(null);
 
   const startEdit = () => {
     setFirstName(user.first_name ?? user.name?.split(' ')[0] ?? '');
     setLastName(user.last_name ?? user.name?.split(' ').slice(1).join(' ') ?? '');
     setMobile(user.mobile ?? '');
+    setEmail(user.email ?? '');
     setError(null);
     setEdit(true);
   };
 
   const handleSave = async () => {
+    const trimmedEmail = email.trim();
+    if (!firstName.trim()) {
+      setError(t('الاسم الأول مطلوب'));
+      return;
+    }
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError(t('البريد الإلكتروني غير صحيح'));
+      return;
+    }
     setError(null);
     try {
       await updateMutation.mutateAsync({
         id: user.id,
-        body: { first_name: firstName, last_name: lastName, mobile },
+        body: {
+          first_name: firstName,
+          last_name: lastName,
+          mobile,
+          ...(trimmedEmail ? { email: trimmedEmail } : {}),
+        },
       });
       await refreshUser();
       setEdit(false);
@@ -1085,6 +1471,17 @@ function InfoTab({
               className={`${inputCls} ltr ${isAr ? 'text-right' : 'text-left'}`}
             />
           </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-sm font-extrabold text-ink">{t('البريد الإلكتروني')}</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              dir="ltr"
+              className={`${inputCls} ${isAr ? 'text-right' : 'text-left'}`}
+            />
+          </div>
         </div>
       ) : (
         <div className="mt-3 divide-y divide-border">
@@ -1094,7 +1491,21 @@ function InfoTab({
             value={`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.name}
           />
           <InfoRow icon={Phone} label={t('رقم الموبايل')} value={user.mobile} ltr />
+          <InfoRow icon={Mail} label={t('البريد الإلكتروني')} value={user.email} ltr />
         </div>
+      )}
+
+      {!edit && !user.email && (
+        <button
+          onClick={startEdit}
+          className="mt-4 flex w-full items-center gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-start transition-colors hover:border-amber-500"
+        >
+          <CircleAlert className="h-5 w-5 shrink-0 text-amber-600" />
+          <span className="flex-1 text-sm font-black text-amber-800">
+            {t('بياناتك ناقصة — ضيف بريدك الإلكتروني عشان نوصلك')}
+          </span>
+          <span className="shrink-0 text-xs font-black text-amber-700 underline">{t('كمّل بياناتك')}</span>
+        </button>
       )}
 
       {error && <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
@@ -1431,6 +1842,8 @@ function InvoicesTab() {
 const TABS: { key: Tab; label: string; icon: LucideIcon }[] = [
   { key: 'info', label: 'بياناتي', icon: User },
   { key: 'orders', label: 'طلباتي', icon: Package },
+  { key: 'bookings', label: 'حجوزاتي', icon: CalendarClock },
+  { key: 'joborders', label: 'أوامر الشغل', icon: Wrench },
   { key: 'invoices', label: 'فواتيري', icon: ReceiptText },
   { key: 'alerts', label: 'التنبيهات', icon: Bell },
 ];
@@ -1492,6 +1905,15 @@ export default function ProfilePage() {
                     <Phone className="h-4 w-4 text-brand" />
                     <span className="ltr">{user.mobile}</span>
                   </p>
+                  {!user.email && (
+                    <button
+                      onClick={() => setActiveTab('info')}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-400/10 px-3.5 py-1.5 text-xs font-black text-amber-300 transition-colors hover:bg-amber-400/20"
+                    >
+                      <CircleAlert className="h-4 w-4 shrink-0" />
+                      {t('بياناتك ناقصة — لازم تضيف إيميلك')}
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -1546,6 +1968,8 @@ export default function ProfilePage() {
           <div className="min-w-0">
             {activeTab === 'info' && <InfoTab user={user} />}
             {activeTab === 'orders' && <OrdersTab />}
+            {activeTab === 'bookings' && <BookingsTab />}
+            {activeTab === 'joborders' && <JobOrdersTab />}
             {activeTab === 'invoices' && <InvoicesTab />}
             {activeTab === 'alerts' && <AlertsTab />}
           </div>

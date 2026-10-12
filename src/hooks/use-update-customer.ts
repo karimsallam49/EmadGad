@@ -3,7 +3,7 @@ import { updateCustomerBasicInfo } from '@/lib/api';
 
 export function useUpdateCustomer() {
   return useMutation({
-    mutationFn: ({ id, body }: { id: number; body: { first_name: string; last_name: string; mobile: string } }) =>
+    mutationFn: ({ id, body }: { id: number; body: { first_name: string; last_name: string; mobile: string; email?: string } }) =>
       updateCustomerBasicInfo(id, body),
   });
 }

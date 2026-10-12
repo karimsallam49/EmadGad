@@ -34,7 +34,7 @@ function Pill({
 }
 
 export default function TaxonomyPage() {
-  const { t } = useLang();
+  const { t, isAr } = useLang();
   const { data: categories, isLoading: catsLoading } = useTaxonomy({
     type: 'product',
     business_id: 1,
@@ -45,6 +45,7 @@ export default function TaxonomyPage() {
   const [subId, setSubId] = useState<number | null>(null);
 
   const cats = useMemo(() => categories ?? [], [categories]);
+  const catName = (c: TaxonomyModel) => (isAr ? c.name : (c.name_en ?? t(c.name)));
   const selectedCat = cats.find((c) => c.id === catId);
   const subs = selectedCat?.sub_categories ?? [];
   const activeId = subId ?? catId;
@@ -104,7 +105,7 @@ export default function TaxonomyPage() {
                 onClick={() => pickCat(cat)}
                 logo={storageUrl(cat.jobsheet_photo) ?? storageUrl(cat.logo)}
               >
-                {cat.name}
+                {catName(cat)}
               </Pill>
             ))}
           </div>
@@ -119,7 +120,7 @@ export default function TaxonomyPage() {
               </Pill>
               {subs.map((sub) => (
                 <Pill key={sub.id} active={subId === sub.id} onClick={() => setSubId(sub.id)}>
-                  {sub.name}
+                  {catName(sub)}
                 </Pill>
               ))}
             </div>
