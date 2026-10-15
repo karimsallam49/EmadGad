@@ -58,7 +58,6 @@ export default function LoginPage() {
           <div>
             <label className="mb-1.5 block text-sm font-extrabold text-ink">{t('كلمة المرور')}</label>
             <Input
-              value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               placeholder="••••••••"

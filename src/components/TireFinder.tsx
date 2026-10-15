@@ -42,7 +42,10 @@ function LevelSelect({ level, parentItemId, selectedItemId, disabledHint, onSele
 
   const waitingForParent = parentItemId == null && level.items.length === 0;
   const items = parentItemId != null ? (data?.items ?? []) : level.items;
-  const resolvedLevelName = data?.level?.name ?? level.name;
+  const srcLevel = data?.level ?? level;
+  const resolvedLevelName = isAr
+    ? srcLevel.name
+    : (srcLevel.levelname_en ?? srcLevel.name);
 
   return (
     <Field label={resolvedLevelName}>
@@ -66,7 +69,7 @@ function LevelSelect({ level, parentItemId, selectedItemId, disabledHint, onSele
           ) : items.length > 0 ? (
             items.map((item: CategoryLevelItemModel) => (
               <SelectItem key={item.id} value={String(item.id)} className="font-bold ltr">
-                {item.name}
+                {isAr ? item.name : (item.name_en ?? item.name)}
               </SelectItem>
             ))
           ) : (
@@ -146,7 +149,7 @@ export function TireFinderForm({ onSearch }: Props) {
     levelNames.slice(0, levelIndex).forEach((l) => {
       if (selectedByLevel[l.level_id]) next[l.level_id] = selectedByLevel[l.level_id];
     });
-    next[levelId] = { id: item.id, name: item.name };
+    next[levelId] = { id: item.id, name: isAr ? item.name : (item.name_en ?? item.name) };
     setSelectedByLevel(next);
   };
 

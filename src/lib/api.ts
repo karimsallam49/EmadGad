@@ -924,7 +924,10 @@ export async function cancelEcomOrder(id: number, note?: string) {
 /** POST ecommerce/orders/{id}/pay — start online payment for an order (auth) */
 export async function payEcomOrder(id: number, body: DTO.EcomPayOrderBody) {
   const res = await api.post<DTO.EcomPaymentInitModel>(ENDPOINTS.ecomOrderPay(id), body);
-  return (res.data ?? null) as DTO.EcomPaymentInitModel | null;
+  const raw = res as DTO.ApiResponse<DTO.EcomPaymentInitModel> & {
+    payment?: DTO.EcomPaymentInitModel | null;
+  };
+  return (raw.payment ?? raw.data ?? null) as DTO.EcomPaymentInitModel | null;
 }
 
 /** GET ecommerce/payments/{payment_id}/status — poll after the payment webview (auth) */

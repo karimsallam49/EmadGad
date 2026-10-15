@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { BadgeCheck, Building2, Check, Clock, CreditCard, Gift, Loader2, LogIn, MapPin, Phone, RotateCcw, Sparkles, Truck, User, Wallet, X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BRANCHES, SHIPPING_FEE } from '@/data';
 import { useWhatsappUrl } from '@/hooks/use-social-media';
@@ -13,78 +14,87 @@ import { useEcomLoyalty } from '@/hooks/use-ecom-loyalty';
 import { useDeliveryAreas } from '@/hooks/use-delivery-areas';
 import { useDeliveryCharge } from '@/hooks/use-delivery-fee';
 import { useOffers } from '@/hooks/use-offers';
-import { useCreateEcomOrder } from '@/hooks/use-ecom-orders';
+import { ecomOrdersKeys, useCreateEcomOrder } from '@/hooks/use-ecom-orders';
 import { useEcomPaymentStatus, usePayEcomOrder } from '@/hooks/use-order-payment';
+import { getEcomOrder } from '@/lib/api';
 import { productPrice, useOfferProducts } from '@/hooks/use-apply-offer';
+import {
+  decodePaymentToken,
+  goToGateway,
+  OFFLINE_PAYMENT_METHODS,
+  PENDING_PAYMENT_KEY,
+  readGatewayReturn,
+  type PendingPayment,
+} from '@/lib/payment';
 import type { CreateEcomOrderBody, EcomOrderModel, EcomPaymentInitModel, OfferModel } from '@/lib/api';
 import { WhatsAppIcon } from '@/components/art';
 
 const inputCls = 'w-full h-12 rounded-xl border-2 border-border bg-white dark:bg-[#1c1c1c] text-ink px-4 font-bold focus:outline-none focus:border-ink';
 
 type Mode = 'branch' | 'shipping';
-const OFFLINE_METHODS = ['pay_at_branch', 'cash_on_delivery'];
 
 interface PlacedOrder {
   order: EcomOrderModel;
   paymentInit: EcomPaymentInitModel | null;
 }
 
-/** Stashed before redirecting to the gateway webview, so the ?flag=... return has context */
-const PENDING_PAYMENT_KEY = 'emadgad-pending-payment';
-interface PendingPayment {
-  order_id: number;
-  order_no?: string;
-  payment_id?: number;
-  gateway?: string;
-}
-
-function readGatewayReturn(): { flag: string; pending: PendingPayment | null } | null {
-  const params = new URLSearchParams(window.location.search);
-  const flag = params.get('flag');
-  if (flag !== 'success' && flag !== 'fail') return null;
-  let pending: PendingPayment | null = null;
-  try {
-    pending = JSON.parse(sessionStorage.getItem(PENDING_PAYMENT_KEY) ?? 'null');
-  } catch { /* malformed cache */ }
-  sessionStorage.removeItem(PENDING_PAYMENT_KEY);
-  window.history.replaceState(null, '', window.location.pathname);
-  return { flag, pending };
-}
-
-function goToGateway(url: string, info: PendingPayment) {
-  try {
-    sessionStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(info));
-  } catch { /* private mode — the return will just lack context */ }
-  window.location.assign(url);
-}
-
-function GatewayReturn({ flag, pending }: { flag: string; pending: PendingPayment | null }) {
+function GatewayReturn({ flag, pending, token }: { flag: string; pending: PendingPayment | null; token: string | null }) {
   const { t } = useLang();
-  const status = useEcomPaymentStatus(pending?.payment_id, !!pending?.payment_id);
   const payMutation = usePayEcomOrder();
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [deadline] = useState(() => Date.now() + 75_000);
 
-  const paid =
-    flag === 'success' ||
-    status.data?.is_paid ||
-    status.data?.payment_status === 'paid';
+  // order_id survives even if sessionStorage was cleared — it's inside the gateway token
+  const tokenInfo = useMemo(() => decodePaymentToken(token), [token]);
+  const orderId = pending?.order_id ?? tokenInfo.order_id ?? null;
+
+  // Final verification comes from the order itself (payment_status), not the flag —
+  // poll GET orders/{id} until it resolves, give up after ~75s.
+  const orderQuery = useQuery({
+    queryKey: ecomOrdersKeys.detail(orderId ?? 0),
+    queryFn: () => getEcomOrder(orderId!),
+    enabled: orderId != null,
+    refetchInterval: (q) => {
+      const d = q.state.data;
+      if (!d) return 4000;
+      if (d.payment_status === 'paid' || d.payment_status === 'partial_paid') return false;
+      if (d.order_status === 'payment_failed' || d.payment_status === 'failed') return false;
+      if (flag === 'fail' || Date.now() > deadline) return false;
+      return 4000;
+    },
+    retry: false,
+  });
+
+  const order = orderQuery.data;
+  const orderNo = pending?.order_no ?? order?.order_no;
+
+  const paid = order
+    ? order.payment_status === 'paid' || order.payment_status === 'partial_paid'
+    : flag === 'success';
   const failed =
     flag === 'fail' ||
-    status.data?.payment_status === 'failed' ||
-    status.data?.payment_status === 'payment_failed';
+    order?.order_status === 'payment_failed' ||
+    order?.payment_status === 'failed';
+  // the gateway said success but the order still shows unpaid — keep checking until the deadline
+  const stillVerifying = !paid && !failed && (!order || orderQuery.fetchStatus !== 'idle');
 
   const retry = async () => {
-    if (!pending) return;
+    if (!orderId) return;
     setRetryError(null);
     try {
       const init = await payMutation.mutateAsync({
-        id: pending.order_id,
-        gateway: pending.gateway,
+        id: orderId,
+        gateway: pending?.gateway,
         channel: 'web',
         callback_url: `${window.location.origin}/checkout`,
       });
       if (init?.payment_url) {
-        goToGateway(init.payment_url, { ...pending, payment_id: init.payment_id });
+        goToGateway(init.payment_url, {
+          order_id: orderId,
+          order_no: orderNo,
+          payment_id: init.payment_id,
+          gateway: pending?.gateway,
+        });
       } else {
         setRetryError(t('مش قادرين نبدأ الدفع دلوقتي — جرب تاني'));
       }
@@ -102,15 +112,13 @@ function GatewayReturn({ flag, pending }: { flag: string; pending: PendingPaymen
               <Check className="h-10 w-10 text-white" />
             </span>
             <h1 className="mt-6 text-3xl sm:text-4xl font-black text-ink">{t('تم الدفع بنجاح')}</h1>
-            {pending?.order_no && (
+            {orderNo && (
               <p className="mt-3 text-lg font-semibold text-ink-mute">
-                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{pending.order_no}</span>
+                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{orderNo}</span>
               </p>
             )}
             <p className="mt-4 text-base font-semibold text-ink-mute">
-              {status.isFetching || status.isLoading
-                ? t('جاري انتظار تأكيد الدفع...')
-                : t('بنكلمك للتأكيد قبل أي خصم أو تركيب')}
+              {t('بنكلمك للتأكيد قبل أي خصم أو تركيب')}
             </p>
           </>
         ) : failed ? (
@@ -119,15 +127,15 @@ function GatewayReturn({ flag, pending }: { flag: string; pending: PendingPaymen
               <X className="h-10 w-10 text-white" />
             </span>
             <h1 className="mt-6 text-3xl sm:text-4xl font-black text-ink">{t('الدفع مكملش')}</h1>
-            {pending?.order_no && (
+            {orderNo && (
               <p className="mt-3 text-lg font-semibold text-ink-mute">
-                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{pending.order_no}</span>
+                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{orderNo}</span>
               </p>
             )}
             <p className="mt-4 text-base font-semibold text-ink-mute">
               {t('الدفع فشل أو اتلغى — الطلب محفوظ وتقدر تحاول تاني')}
             </p>
-            {pending && (
+            {orderId != null && (
               <button
                 type="button"
                 onClick={retry}
@@ -146,10 +154,25 @@ function GatewayReturn({ flag, pending }: { flag: string; pending: PendingPaymen
               <p className="mt-3 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">{retryError}</p>
             )}
           </>
-        ) : (
+        ) : stillVerifying ? (
           <>
             <Loader2 className="mx-auto h-10 w-10 animate-spin text-ink-mute" />
             <p className="mt-4 text-base font-semibold text-ink-mute">{t('جاري انتظار تأكيد الدفع...')}</p>
+          </>
+        ) : (
+          <>
+            <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-400">
+              <Clock className="h-10 w-10 text-white" />
+            </span>
+            <h1 className="mt-6 text-3xl sm:text-4xl font-black text-ink">{t('لسه بنتأكد من الدفع')}</h1>
+            {orderNo && (
+              <p className="mt-3 text-lg font-semibold text-ink-mute">
+                {t('رقم الطلب:')} <span className="ltr font-black text-ink">{orderNo}</span>
+              </p>
+            )}
+            <p className="mt-4 text-base font-semibold text-ink-mute">
+              {t('لو المبلغ اتخصم هيتأكد تلقائيًا خلال دقايق — تقدر تتابع الطلب من حسابك')}
+            </p>
           </>
         )}
         <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -194,6 +217,7 @@ export default function CheckoutPage() {
   const [redeemPoints, setRedeemPoints] = useState('');
   const [orderNote, setOrderNote] = useState('');
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+  const [gatewayRedirect, setGatewayRedirect] = useState<(PendingPayment & { url: string }) | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [gatewayReturn] = useState(readGatewayReturn);
 
@@ -339,7 +363,7 @@ export default function CheckoutPage() {
     : null;
 
   const estimatedTotal = Math.max(0, total + deliveryFee - offerEstimate - redeemEstimate);
-  const isOnlinePayment = !OFFLINE_METHODS.includes(payment);
+  const isOnlinePayment = !OFFLINE_PAYMENT_METHODS.includes(payment);
 
   const pickMode = (m: Mode) => {
     setMode(m);
@@ -353,6 +377,13 @@ export default function CheckoutPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethods]);
+
+  // brief "order placed" beat, then jump into the hosted payment session
+  useEffect(() => {
+    if (!gatewayRedirect) return;
+    const timer = setTimeout(() => goToGateway(gatewayRedirect.url, gatewayRedirect), 1400);
+    return () => clearTimeout(timer);
+  }, [gatewayRedirect]);
 
   const paymentOk =
     payment === 'pay_at_branch'
@@ -428,8 +459,24 @@ export default function CheckoutPage() {
           paymentInit = null;
         }
       }
-      setPlaced({ order, paymentInit });
       clear();
+      if (paymentInit?.payment_url) {
+        // show the order-confirmation beat first, then hop into the gateway session
+        const info: PendingPayment & { url: string } = {
+          url: paymentInit.payment_url,
+          order_id: order?.id,
+          order_no: order?.order_no,
+          payment_id: paymentInit.payment_id,
+          gateway: payment,
+        };
+        try {
+          sessionStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(info));
+        } catch { /* private mode */ }
+        setGatewayRedirect(info);
+        window.scrollTo(0, 0);
+        return;
+      }
+      setPlaced({ order, paymentInit });
       window.scrollTo(0, 0);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
@@ -441,9 +488,41 @@ export default function CheckoutPage() {
     }
   };
 
+  // ── order placed → opening the payment session ──
+  if (gatewayRedirect) {
+    return (
+      <div className="bg-paper min-h-[calc(100vh-80px)] w-full overflow-hidden">
+        <div className="mx-auto max-w-xl px-4 sm:px-6 py-16 text-center">
+          <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand">
+            <Check className="h-10 w-10 text-ink" />
+          </span>
+          <h1 className="mt-6 text-3xl sm:text-4xl font-black text-ink">{t('طلبك اتسجل بنجاح!')}</h1>
+          {gatewayRedirect.order_no && (
+            <p className="mt-3 text-lg font-semibold text-ink-mute">
+              {t('رقم الطلب:')}{' '}
+              <span className="ltr font-black text-ink">{gatewayRedirect.order_no}</span>
+            </p>
+          )}
+          <div className="mt-6 rounded-2xl border-2 border-ink bg-white dark:bg-[#1c1c1c] p-6 shadow-[0_8px_0_#f6c744]">
+            <p className="flex items-center justify-center gap-3 text-base font-black text-ink">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {t('جاري تحويلك لصفحة الدفع...')}
+            </p>
+            <a
+              href={gatewayRedirect.url}
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-ink px-6 h-11 font-black text-ink hover:bg-coal hover:text-brand transition-colors w-full"
+            >
+              <CreditCard className="h-5 w-5" /> {t('لو الصفحة ما اتفتحتش — دوس هنا')}
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── gateway return (?flag=success|fail&token=...) ──
   if (gatewayReturn) {
-    return <GatewayReturn flag={gatewayReturn.flag} pending={gatewayReturn.pending} />;
+    return <GatewayReturn flag={gatewayReturn.flag} pending={gatewayReturn.pending} token={gatewayReturn.token} />;
   }
 
   // ── success screen ──
@@ -658,7 +737,13 @@ export default function CheckoutPage() {
                   <div>
                     <label className="block text-sm font-extrabold text-ink mb-1.5">{t('عنوان الشحن بالتفصيل')}</label>
                     <input value={address} onChange={(e) => setAddress(e.target.value)}
-                      placeholder={t('مثال: مدينة نصر، شارع عباس العقاد، عمارة ١٥، الدور التالت')} className={inputCls} />
+                      placeholder={t('مثال: مدينة نصر، شارع عباس العقاد، عمارة ١٥، الدور التالت')}
+                      className={`${inputCls} ${address.trim().length > 0 && address.trim().length < 8 ? 'border-red-400' : ''}`} />
+                    {address.trim().length > 0 && address.trim().length < 8 && (
+                      <p className="mt-1.5 text-xs font-bold text-red-600">
+                        {t('العنوان قصير — اكتب عنوان تفصيلي (٨ حروف أو أكتر)')}
+                      </p>
+                    )}
                   </div>
                   <p className="flex items-center gap-2 rounded-xl bg-brand-light dark:bg-brand/20 px-4 py-3 text-sm font-bold text-ink">
                     <Truck className="h-4 w-4 shrink-0" /> {t('الشحن بيوصل خلال ٢-٤ أيام عمل — والدفع عند الاستلام')}
@@ -842,7 +927,13 @@ export default function CheckoutPage() {
             </button>
             {!valid && (
               <p className="mt-2 text-center text-xs font-bold text-ink-mute">
-                {!user ? t('التسجيل مطلوب عشان ننشئ الطلب على حسابك') : mode === 'shipping' ? t('كمل بياناتك وعنوان الشحن عشان تأكد الطلب') : t('كمل البيانات والميعاد عشان تأكد الطلب')}
+                {!user
+                  ? t('التسجيل مطلوب عشان ننشئ الطلب على حسابك')
+                  : mode === 'shipping' && address.trim().length > 0 && address.trim().length < 8
+                    ? t('العنوان قصير — اكتب عنوان تفصيلي (٨ حروف أو أكتر)')
+                    : mode === 'shipping'
+                      ? t('كمل بياناتك وعنوان الشحن عشان تأكد الطلب')
+                      : t('كمل البيانات والميعاد عشان تأكد الطلب')}
               </p>
             )}
           </aside>

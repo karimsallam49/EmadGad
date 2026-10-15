@@ -689,6 +689,14 @@ const DICT: Record<string, string> = {
   'جرّب الدفع تاني': 'Try paying again',
   'مش قادرين نبدأ الدفع دلوقتي — جرب تاني': "Couldn't start the payment right now — try again",
   'شوف طلباتك': 'View your orders',
+  'لسه بنتأكد من الدفع': 'Still confirming your payment',
+  'لو المبلغ اتخصم هيتأكد تلقائيًا خلال دقايق — تقدر تتابع الطلب من حسابك':
+    'If the amount was charged it will be confirmed within minutes — you can track the order from your account',
+  'العنوان قصير — اكتب عنوان تفصيلي (٨ حروف أو أكتر)':
+    'Address is too short — enter a detailed address (8+ characters)',
+  'جاري تجهيز الدفع...': 'Preparing payment...',
+  'جاري تحويلك لصفحة الدفع...': 'Redirecting you to the payment page...',
+  'لو الصفحة ما اتفتحتش — دوس هنا': "If it didn't open — tap here",
   'بنتحقق من الدفع تلقائيًا بعد ما تخلص': 'We automatically verify the payment once you finish',
   'تم الدفع بنجاح': 'Payment successful',
   'حالة الطلب: قيد الانتظار لحد ما نأكده': 'Order status: pending until we confirm it',

@@ -781,6 +781,7 @@ export interface OfferRawModel {
 export interface CategoryLevelItemModel {
   id: number;
   name: string;
+  name_en?: string | null;
   parent_id?: number;
 }
 
@@ -788,6 +789,7 @@ export interface CategoryLevelNameModel {
   level_id: number;
   level: number;
   name: string;
+  levelname_en?: string | null;
   items: CategoryLevelItemModel[];
 }
 

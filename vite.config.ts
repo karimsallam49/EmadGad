@@ -30,17 +30,17 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/connector/api': {
-        target: 'https://dev.carserv.pro',
+        target: 'https://erp.emadgad.com',
         changeOrigin: true,
         secure: true,
       },
       '/contact': {
-        target: 'https://dev.carserv.pro',
+        target: 'https://erp.emadgad.com',
         changeOrigin: true,
         secure: true,
       },
       '/auth': {
-        target: 'https://dev.carserv.pro',
+        target: 'https://erp.emadgad.com',
         changeOrigin: true,
         secure: true,
       },

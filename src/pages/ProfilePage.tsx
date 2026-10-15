@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   CircleAlert,
   Coins,
+  CreditCard,
   Gauge,
   Gift,
   Hash,
@@ -37,6 +38,8 @@ import { useAuth } from '@/auth';
 import { useLang } from '@/i18n';
 import { useUpdateCustomer } from '@/hooks/use-update-customer';
 import { useCancelEcomOrder, useEcomOrders } from '@/hooks/use-ecom-orders';
+import { usePayEcomOrder } from '@/hooks/use-order-payment';
+import { gatewayFromPaymentMethod, goToGateway } from '@/lib/payment';
 import { useNotifyMeSubscriptions, useToggleNotifyMe } from '@/hooks/use-notify-me';
 import { useEcomLoyalty } from '@/hooks/use-ecom-loyalty';
 import { useEcomInvoice, useEcomInvoices } from '@/hooks/use-ecom-invoices';
@@ -178,6 +181,7 @@ function EmptyState({
 function OrderCard({ order }: { order: EcomOrderModel }) {
   const { t, isAr, num, fmt } = useLang();
   const cancelMutation = useCancelEcomOrder();
+  const payMutation = usePayEcomOrder();
   const [error, setError] = useState<string | null>(null);
 
   const cancel = async () => {
@@ -186,6 +190,38 @@ function OrderCard({ order }: { order: EcomOrderModel }) {
       await cancelMutation.mutateAsync({ id: order.id });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('فشل إلغاء الطلب'));
+    }
+  };
+
+  // online-gateway order that never got paid (webview closed mid-payment, failed attempt, ...)
+  const gateway = gatewayFromPaymentMethod(order.payment_method);
+  const canResumePay =
+    !!gateway &&
+    order.payment_status !== 'paid' &&
+    order.payment_status !== 'partial_paid' &&
+    !['cancelled', 'canceled', 'rejected'].includes(order.order_status);
+
+  const resumePay = async () => {
+    setError(null);
+    try {
+      const init = await payMutation.mutateAsync({
+        id: order.id,
+        gateway: gateway!,
+        channel: 'web',
+        callback_url: `${window.location.origin}/checkout`,
+      });
+      if (init?.payment_url) {
+        goToGateway(init.payment_url, {
+          order_id: order.id,
+          order_no: order.order_no,
+          payment_id: init.payment_id,
+          gateway: gateway!,
+        });
+      } else {
+        setError(t('مش قادرين نبدأ الدفع دلوقتي — جرب تاني'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('حصلت مشكلة — جرب تاني'));
     }
   };
 
@@ -262,6 +298,16 @@ function OrderCard({ order }: { order: EcomOrderModel }) {
         <p className="text-lg font-black text-ink">{fmt(order.final_total)}</p>
       </div>
 
+      {canResumePay && (
+        <button
+          onClick={resumePay}
+          disabled={payMutation.isPending}
+          className="mt-3 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-coal text-brand px-5 h-11 text-sm font-black disabled:opacity-40"
+        >
+          {payMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+          {payMutation.isPending ? t('جاري تجهيز الدفع...') : t('كمّل الدفع أونلاين')}
+        </button>
+      )}
       {order.order_status === 'pending' && (
         <button onClick={cancel} disabled={cancelMutation.isPending} className={`${dangerBtn} mt-3 w-full sm:w-auto`}>
           {cancelMutation.isPending ? t('جاري الإلغاء...') : t('إلغاء الطلب')}

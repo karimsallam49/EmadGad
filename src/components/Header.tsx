@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router';
-import { Languages, LogIn, Menu, Moon, ShoppingCart, Sun, User, X } from 'lucide-react';
+import { Languages, LogIn, Menu, Moon, ShoppingCart, Sun, User } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/auth';
 import { useCart } from '@/cart';
@@ -162,18 +162,11 @@ export default function Header() {
                   <Menu className="h-6 w-6" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] p-0">
-                <div className="flex items-center justify-between p-4 border-b border-border">
+              <SheetContent side="right" className="w-[300px] p-0 gap-0">
+                <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                   <Logo className="h-8" />
-                  <button
-                    onClick={() => setMenuOpen(false)}
-                    className="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-muted"
-                    aria-label={t('إغلاق')}
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
                 </div>
-                <nav className="flex flex-col p-3" aria-label="Mobile menu">
+                <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col p-3" aria-label="Mobile menu">
                   {NAV.map((item) => (
                     <NavLink
                       key={item.to}
@@ -203,7 +196,7 @@ export default function Header() {
                     </NavLink>
                   ))}
                 </nav>
-                <div className="p-4 border-t border-border space-y-3">
+                <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border space-y-3">
                   <div className="flex items-center gap-2">
                     <LangToggle className="flex-1 justify-center h-12 rounded-xl" />
                     <ThemeToggle className="h-12 w-12 rounded-xl shrink-0" />
