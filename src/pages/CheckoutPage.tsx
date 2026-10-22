@@ -4,7 +4,7 @@ import { BadgeCheck, Building2, Check, Clock, CreditCard, Gift, Loader2, LogIn, 
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BRANCHES, SHIPPING_FEE } from '@/data';
-import { useWhatsappUrl } from '@/hooks/use-social-media';
+import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { useAuth } from '@/auth';
 import { useCart } from '@/cart';
 import { itemDisplay, useLang } from '@/i18n';
@@ -196,7 +196,7 @@ function GatewayReturn({ flag, pending, token }: { flag: string; pending: Pendin
 
 export default function CheckoutPage() {
   const { items, total, clear } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t, isAr, num, fmt } = useLang();
   const navigate = useNavigate();
   const location = useLocation();
@@ -378,6 +378,12 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethods]);
 
+  // guests go through login first — the cart is persisted, the ?next param brings them back
+  useEffect(() => {
+    if (authLoading || user || gatewayReturn || items.length === 0) return;
+    navigate('/login?next=/checkout', { replace: true });
+  }, [authLoading, user, gatewayReturn, items.length, navigate]);
+
   // brief "order placed" beat, then jump into the hosted payment session
   useEffect(() => {
     if (!gatewayRedirect) return;
@@ -392,12 +398,15 @@ export default function CheckoutPage() {
         ? isDelivery && codEnabled
         : gateways.some((g) => g.gateway === payment);
 
+  const hasUnavailable = items.some((i) => i.available === false);
+
   const valid =
     !!user?.id &&
     paymentOk &&
     name.trim().length >= 2 &&
     phone.trim().length >= 10 &&
     redeemOk &&
+    !hasUnavailable &&
     (mode === 'branch'
       ? !!branchKey
       : address.trim().length >= 8 && (!(deliveryAreas?.length) || !!areaId));
@@ -406,6 +415,10 @@ export default function CheckoutPage() {
     setSubmitError(null);
     if (!user?.id) {
       setSubmitError(t('سجّل دخولك الأول عشان تكمل الطلب'));
+      return;
+    }
+    if (hasUnavailable) {
+      setSubmitError(t('فيه منتجات غير متاحة في السلة — احذفها قبل إتمام الطلب'));
       return;
     }
     const products = items.map((i) => ({
@@ -620,7 +633,7 @@ export default function CheckoutPage() {
             {mode === 'shipping' ? t('هنكلمك على رقمك خلال دقائق لتأكيد الطلب وتفاصيل الشحن.') : t('هنكلمك على رقمك خلال دقائق لتأكيد الطلب.')}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <a href={waUrl} target="_blank" rel="noreferrer"
+            <a href={waTextLink(waUrl, `أهلاً، عملت طلب على الموقع:\nرقم الطلب: ${order.order_no}\nالإجمالي: ${fmt(order.final_total)}\n${mode === 'branch' ? `الاستلام من: ${order.location_name ?? ''}` : `الشحن إلى: ${order.delivery_area_name ?? address}`}\nمحتاج تأكيد الطلب`)} target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] text-white px-6 h-12 font-black">
               <WhatsAppIcon className="h-5 w-5" /> {t('أكد أسرع على واتساب')}
             </a>
@@ -902,10 +915,10 @@ export default function CheckoutPage() {
               <div className="mt-4 rounded-xl border-2 border-dashed border-ink bg-brand-light dark:bg-brand/20 p-4 text-center">
                 <p className="text-sm font-black text-ink">{t('سجّل دخولك الأول عشان تكمل الطلب')}</p>
                 <div className="mt-3 flex justify-center gap-2">
-                  <Link to="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-coal text-brand px-5 h-11 font-black">
+                  <Link to="/login?next=/checkout" className="inline-flex items-center gap-1.5 rounded-xl bg-coal text-brand px-5 h-11 font-black">
                     <LogIn className="h-4 w-4" /> {t('سجّل دخول')}
                   </Link>
-                  <Link to="/register" className="inline-flex items-center rounded-xl border-2 border-ink px-5 h-11 font-black text-ink">
+                  <Link to="/register?next=/checkout" className="inline-flex items-center rounded-xl border-2 border-ink px-5 h-11 font-black text-ink">
                     {t('سجّل جديد')}
                   </Link>
                 </div>
@@ -929,7 +942,9 @@ export default function CheckoutPage() {
               <p className="mt-2 text-center text-xs font-bold text-ink-mute">
                 {!user
                   ? t('التسجيل مطلوب عشان ننشئ الطلب على حسابك')
-                  : mode === 'shipping' && address.trim().length > 0 && address.trim().length < 8
+                  : hasUnavailable
+                    ? t('فيه منتجات غير متاحة في السلة — احذفها قبل إتمام الطلب')
+                    : mode === 'shipping' && address.trim().length > 0 && address.trim().length < 8
                     ? t('العنوان قصير — اكتب عنوان تفصيلي (٨ حروف أو أكتر)')
                     : mode === 'shipping'
                       ? t('كمل بياناتك وعنوان الشحن عشان تأكد الطلب')

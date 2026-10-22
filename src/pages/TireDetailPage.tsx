@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { TIRES, tireImg, type Tire } from '@/data';
-import { useWhatsappUrl } from '@/hooks/use-social-media';
+import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { useCart } from '@/cart';
 import { useLang } from '@/i18n';
 import { WhatsAppIcon } from '@/components/art';
@@ -162,7 +162,7 @@ export default function TireDetailPage() {
 
             <ProductOffers productId={tire.productId} variationId={tire.variationId} />
 
-            <a href={waUrl} target="_blank" rel="noreferrer"
+            <a href={waTextLink(waUrl, `أهلاً، عايز أسأل عن إطار:\n${cartTitle}\nالمقاس: ${tire.size}\nالسعر: ${fmt(tire.price)}`)} target="_blank" rel="noreferrer"
               className="mt-6 inline-flex items-center gap-2 text-base font-black text-ink underline underline-offset-8 decoration-brand decoration-2 hover:decoration-4">
               <WhatsAppIcon className="h-5 w-5 text-[#25D366]" /> {t('محتاج مساعدة في المقاس؟ كلمنا واتساب')}
             </a>
@@ -172,7 +172,7 @@ export default function TireDetailPage() {
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl sm:text-3xl font-black text-ink">{t('إطارات تانية بنفس المقاس')} <span className="ltr">{tire.size}</span></h2>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
               {related.map((tr) => <TireCard key={tr.id} tire={tr} detailBase="/tires" />)}
             </div>
           </div>

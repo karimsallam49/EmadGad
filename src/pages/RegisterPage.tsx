@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/auth';
 import { useLang } from '@/i18n';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,9 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const { t } = useLang();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get('next');
+  const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/';
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -55,7 +58,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
       });
-      navigate('/');
+      navigate(next, { replace: true });
     } catch (err) {
       setError(
         err instanceof Error && err.message === 'AUTO_LOGIN_FAILED'
@@ -124,10 +127,13 @@ export default function RegisterPage() {
             {t('أو')}
             <span className="h-px flex-1 bg-border" />
           </div>
-          <GoogleAuthButton />
+          <GoogleAuthButton onDone={() => navigate(next, { replace: true })} />
           <p className="text-center text-sm font-bold text-ink-mute">
             {t('عندك حساب؟')}{' '}
-            <Link to="/login" className="font-black text-ink underline hover:text-brand">
+            <Link
+              to={nextParam ? `/login?next=${encodeURIComponent(nextParam)}` : '/login'}
+              className="font-black text-ink underline hover:text-brand"
+            >
               {t('دخول')}
             </Link>
           </p>

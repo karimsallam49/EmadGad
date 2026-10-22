@@ -314,18 +314,18 @@ export async function addCustomerCar(body: AddCustomerCarBody) {
 
 export interface ContactKmModel {
   value: number | null;
-  source: 'contact' | 'jobsheet' | string | null;
+  source: 'car' | 'contact' | 'jobsheet' | string | null;
   date?: string | null;
 }
 
-export async function getContactKm() {
-  const res = await apiRequest<unknown>(ENDPOINTS.contactKm, 'GET');
+export async function getContactKm(deviceId: number) {
+  const res = await apiRequest<unknown>(ENDPOINTS.contactKm, 'GET', undefined, { device_id: deviceId });
   const raw = res as unknown as { km?: ContactKmModel };
   return raw.km ?? null;
 }
 
-export async function updateContactKm(km: number) {
-  const res = await apiRequest<unknown>(ENDPOINTS.contactKm, 'POST', { km });
+export async function updateContactKm(deviceId: number, km: number) {
+  const res = await apiRequest<unknown>(ENDPOINTS.contactKm, 'POST', { device_id: deviceId, km });
   const raw = res as unknown as { km?: ContactKmModel };
   return raw.km ?? null;
 }
@@ -336,9 +336,10 @@ export interface ContactKmScanResult {
   is_greater: boolean;
 }
 
-export async function scanContactKm(image: File) {
+export async function scanContactKm(image: File, deviceId?: number) {
   const fd = new FormData();
   fd.set('image', image);
+  if (deviceId != null) fd.set('device_id', String(deviceId));
   const res = await apiRequest<unknown>(ENDPOINTS.contactKmScan, 'POST', fd);
   const raw = res as unknown as Partial<ContactKmScanResult>;
   return {
@@ -498,6 +499,46 @@ export async function getEcomProductsInfinite(query: {
   selected_item_ids?: string;
 }) {
   return api.get<DTO.PaginatedResponse<DTO.EcomProductInfiniteModel>>(ENDPOINTS.ecomProductsInfinite, query);
+}
+
+/** Tolerant extraction — product feeds come back as a plain array or a Laravel paginator */
+function extractProductList(res: unknown): DTO.EcomProductInfiniteModel[] {
+  const raw = (res as { data?: unknown } | undefined)?.data ?? res;
+  const arr = Array.isArray(raw) ? raw : (raw as { data?: unknown[] } | undefined)?.data;
+  return Array.isArray(arr) ? (arr as DTO.EcomProductInfiniteModel[]) : [];
+}
+
+/** GET public/ecom-products/featured — home "featured" feed */
+export async function getFeaturedEcomProducts(businessId = 1) {
+  return extractProductList(
+    await api.get<unknown>(ENDPOINTS.ecomProductsFeatured, { business_id: businessId }),
+  );
+}
+
+/** GET public/ecom-products/best-sell — home "best sellers" feed */
+export async function getBestSellEcomProducts(businessId = 1) {
+  return extractProductList(
+    await api.get<unknown>(ENDPOINTS.ecomProductsBestSell, { business_id: businessId }),
+  );
+}
+
+/** GET public/ecom-products-search?q= — full product rows, same ecom-products schema */
+export async function searchEcomProducts(query: {
+  business_id: number;
+  q: string;
+  per_page?: number;
+  page?: number;
+}) {
+  return extractProductList(await api.get<unknown>(ENDPOINTS.ecomProductsSearch, query));
+}
+
+/** GET public/ecom-sliders — home hero banners, sorted by sort_order */
+export async function getEcomSliders(businessId = 1) {
+  const res = await api.get<DTO.EcomSliderModel[]>(ENDPOINTS.ecomSliders, {
+    business_id: businessId,
+  });
+  const raw = (res as unknown as { data?: DTO.EcomSliderModel[] }).data ?? [];
+  return [...raw].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 }
 
 export async function updateCustomerBasicInfo(
@@ -867,6 +908,39 @@ export async function calculateDeliveryFee(query: {
 }) {
   const res = await api.get<{ delivery_charge: number }>(ENDPOINTS.deliveryFeeCalculate, query);
   return (res.data ?? { delivery_charge: 0 }) as { delivery_charge: number };
+}
+
+// ==================== E-Commerce Cart ====================
+
+function extractEcomCart(res: unknown): DTO.EcomCartModel {
+  const raw = res as { cart?: DTO.EcomCartModel; data?: DTO.EcomCartModel };
+  const cart = raw?.cart ?? raw?.data ?? ({} as DTO.EcomCartModel);
+  return { ...cart, items: Array.isArray(cart.items) ? cart.items : [] };
+}
+
+/** GET ecommerce/cart — the contact's cart with live server prices (auth) */
+export async function getEcomCart() {
+  return extractEcomCart(await api.get<unknown>(ENDPOINTS.ecomCart));
+}
+
+/** POST ecommerce/cart/items — add a product; merges into the existing line (auth) */
+export async function addEcomCartItem(body: DTO.EcomAddCartItemBody) {
+  return extractEcomCart(await api.post<unknown>(ENDPOINTS.ecomCartItems, body));
+}
+
+/** PUT ecommerce/cart/items/{id} — change quantity (>0) and/or note (auth) */
+export async function updateEcomCartItem(itemId: number, body: DTO.EcomUpdateCartItemBody) {
+  return extractEcomCart(await api.put<unknown>(ENDPOINTS.ecomCartItem(itemId), body));
+}
+
+/** DELETE ecommerce/cart/items/{id} — remove a line (auth) */
+export async function deleteEcomCartItem(itemId: number) {
+  return extractEcomCart(await api.del<unknown>(ENDPOINTS.ecomCartItem(itemId)));
+}
+
+/** DELETE ecommerce/cart — empty the whole cart (auth) */
+export async function clearEcomCart() {
+  return extractEcomCart(await api.del<unknown>(ENDPOINTS.ecomCart));
 }
 
 /** POST ecommerce/orders — create the order; prices/discounts computed server-side (auth).

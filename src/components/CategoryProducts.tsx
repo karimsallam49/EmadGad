@@ -27,7 +27,7 @@ export default function CategoryProducts({ categoryId, title, subtitle, limit = 
     return (
       <section className={tone === 'white' ? 'bg-white border-y border-border' : 'bg-paper'}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-80 rounded-2xl bg-white border-2 border-border animate-pulse" />
             ))}
@@ -56,7 +56,7 @@ export default function CategoryProducts({ categoryId, title, subtitle, limit = 
           </Link>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {products.map((p) => (
             <ApiProductCard key={`${p.id}-${p.variation_id ?? 0}`} p={p} ctaLabel="أضف للسلة" />
           ))}

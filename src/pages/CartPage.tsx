@@ -35,18 +35,26 @@ export default function CartPage() {
             {items.map((item) => {
               const d = itemDisplay(item.id, item.title, item.subtitle, t, num);
               return (
-                <li key={item.id} className="rounded-2xl border-2 border-border bg-white p-4 flex flex-wrap items-center gap-4">
-                  <div className="flex-1 min-w-40">
+                <li key={item.id} className={`rounded-2xl border-2 bg-white p-4 flex flex-wrap items-center gap-4 ${item.available === false ? 'border-red-500/60' : 'border-border'}`}>
+                  {item.image && (
+                    <img src={item.image} alt={d.title} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                  )}
+                  <div className={`flex-1 min-w-40 ${item.available === false ? 'opacity-60' : ''}`}>
                     <p className="text-base font-black text-ink">{d.title}</p>
                     <p className="text-sm font-bold text-ink-mute ltr">{d.sub}</p>
-                    <p className="text-sm font-bold text-ink-mute">{fmt(item.price)} {t('للقطعة')}</p>
+                    {item.note && <p className="truncate text-xs font-bold text-ink-mute">{item.note}</p>}
+                    {item.available === false ? (
+                      <p className="text-sm font-extrabold text-red-600">{t('غير متاح حاليًا — احذفه للمتابعة')}</p>
+                    ) : (
+                      <p className="text-sm font-bold text-ink-mute">{fmt(item.price)} {t('للقطعة')}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setQty(item.id, item.qty + 1)} aria-label={t('زيادة')}
-                      className="h-9 w-9 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border"><Plus className="h-4 w-4" /></button>
+                    <button onClick={() => setQty(item.id, item.qty + 1)} aria-label={t('زيادة')} disabled={item.available === false}
+                      className="h-9 w-9 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border disabled:opacity-40"><Plus className="h-4 w-4" /></button>
                     <span className="w-7 text-center text-lg font-black">{num(item.qty)}</span>
-                    <button onClick={() => setQty(item.id, item.qty - 1)} aria-label={t('تقليل')}
-                      className="h-9 w-9 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border"><Minus className="h-4 w-4" /></button>
+                    <button onClick={() => setQty(item.id, item.qty - 1)} aria-label={t('تقليل')} disabled={item.available === false}
+                      className="h-9 w-9 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border disabled:opacity-40"><Minus className="h-4 w-4" /></button>
                   </div>
                   <p className="w-28 text-end text-lg font-black text-ink">{fmt(item.price * item.qty)}</p>
                   <button onClick={() => remove(item.id)} aria-label={t('حذف')} className="text-ink-mute hover:text-red-600">
@@ -63,10 +71,6 @@ export default function CartPage() {
               <div className="flex justify-between">
                 <span className="text-ink-mute">{t('عدد القطع')}</span>
                 <span>{num(items.reduce((s, i) => s + i.qty, 0))}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-ink-mute">{t('التركيب في الفرع')}</span>
-                <span className="text-emerald-700">{t('مجاني')}</span>
               </div>
               <div className="flex justify-between border-t border-border pt-2 text-lg font-black">
                 <span>{t('الإجمالي')}</span>

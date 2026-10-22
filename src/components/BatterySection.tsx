@@ -41,9 +41,9 @@ export function ApiProductCard({
         )}
         <ProductImage images={images} alt={p.name} />
       </Link>
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
-          {p.brand_name && <p className="text-sm font-extrabold text-ink-mute">{p.brand_name}</p>}
+          {p.brand_name && <p className="text-xs sm:text-sm font-extrabold text-ink-mute truncate">{p.brand_name}</p>}
           {p.brand_jobsheet_photo && (typeof p.brand_id === 'number' ? (
             <Link
               to={`/products?business_id=1&device_brand_id=${p.brand_id}&brand_name=${encodeURIComponent(p.brand_name ?? '')}`}
@@ -65,14 +65,14 @@ export function ApiProductCard({
             />
           ))}
         </div>
-        <Link to={detailTo} className="mt-1 text-lg font-black text-ink hover:underline underline-offset-4">
+        <Link to={detailTo} className="mt-1 text-base sm:text-lg font-black text-ink hover:underline underline-offset-4">
           {p.name}
         </Link>
         {p.variation?.name && p.variation.name !== 'DUMMY' && (
           <p className="mt-1 text-xs font-bold text-ink-mute">{p.variation.name}</p>
         )}
         <div className="mt-3">
-          <p className="text-2xl font-black text-ink ltr">{fmt(price)}</p>
+          <p className="text-xl sm:text-2xl font-black text-ink ltr">{fmt(price)}</p>
           {disc > 0 && disc < base && (
             <p className="text-xs font-bold text-ink-mute line-through">{fmt(base)}</p>
           )}
@@ -95,7 +95,7 @@ export function ApiProductCard({
                   1,
                 )
               }
-              className="w-full rounded-xl bg-brand text-coal h-12 text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all"
+              className="w-full rounded-xl bg-brand text-coal h-11 sm:h-12 text-sm sm:text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all"
             >
               {t(ctaLabel)}
             </button>
@@ -108,7 +108,7 @@ export function ApiProductCard({
 
 export default function BatterySection({ categoryId = 2222 }: { categoryId?: number }) {
   const { t } = useLang();
-  const waUrl = useWhatsappUrl();
+  const waUrl = useWhatsappUrl('أهلاً، عايز أطلب خدمة تغيير البطارية المتنقلة — نوصلكم في أي مكان');
   const [carFilter, setCarFilter] = useState<BatteryCarFilter>({});
   const hasFilter = !!(carFilter.car_brand_id || carFilter.car_model_id || carFilter.car_year);
 
@@ -196,7 +196,7 @@ export default function BatterySection({ categoryId = 2222 }: { categoryId?: num
                 {hasFilter ? t('مفيش بطاريات مطابقة لعربيتك — جرب موديل أو سنة تانية') : t('مفيش بطاريات متاحة دلوقتي')}
               </p>
             )}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="mt-4 grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {apiProducts.map((p) => (
                 <ApiProductCard key={`${p.id}-${p.variation_id ?? 0}`} p={p} detailBase="/batteries" />
               ))}

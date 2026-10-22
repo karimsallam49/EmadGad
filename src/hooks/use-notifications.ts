@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/auth';
 import { useIdleReady } from '@/hooks/use-idle-ready';
+import { cartKeys } from '@/hooks/use-cart';
 import {
   deleteNotification,
   getUnreadNotificationCount,
@@ -39,6 +40,9 @@ export function useUnreadCount() {
     if (unread == null) return;
     if (prev.current != null && unread > prev.current) {
       qc.invalidateQueries({ queryKey: notificationKeys.list() });
+      // a new notification may be cart_price_update / cart_low_stock —
+      // refetch the cart so live prices stay current
+      qc.invalidateQueries({ queryKey: cartKeys.all });
     }
     prev.current = unread;
   }, [query.data, qc]);

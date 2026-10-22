@@ -1,10 +1,16 @@
-import { lazy, useCallback } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import Hero from '@/components/Hero';
 import NeedEntry from '@/components/NeedEntry';
 import LazySection from '@/components/LazySection';
 
 const TireShop = lazy(() => import('@/components/TireShop'));
+const HomeFeaturedProducts = lazy(() =>
+  import('@/components/HomeProductsSlider').then((m) => ({ default: m.HomeFeaturedProducts })),
+);
+const HomeBestSellProducts = lazy(() =>
+  import('@/components/HomeProductsSlider').then((m) => ({ default: m.HomeBestSellProducts })),
+);
 const BatterySection = lazy(() => import('@/components/BatterySection'));
 const CategoryProducts = lazy(() => import('@/components/CategoryProducts'));
 const MobileService = lazy(() =>
@@ -36,6 +42,10 @@ export default function Home() {
     <>
       <Hero onSearch={handleSearch} />
       <NeedEntry />
+      <Suspense fallback={null}>
+        <HomeFeaturedProducts />
+        <HomeBestSellProducts />
+      </Suspense>
       <LazySection minH={520}>
         <TireShop limit={8} />
       </LazySection>

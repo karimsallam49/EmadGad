@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/auth';
 import { useLang } from '@/i18n';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,9 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { t } = useLang();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get('next');
+  const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +24,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(mobile, password);
-      navigate('/');
+      navigate(next, { replace: true });
     } catch (err) {
       const apiMessage = err instanceof Error ? err.message : '';
       const isCredentialError = /credential|unauthenticated|unauthorized|password|mobile|invalid/i.test(apiMessage);
@@ -77,10 +80,13 @@ export default function LoginPage() {
             {t('أو')}
             <span className="h-px flex-1 bg-border" />
           </div>
-          <GoogleAuthButton />
+          <GoogleAuthButton onDone={() => navigate(next, { replace: true })} />
           <p className="text-center text-sm font-bold text-ink-mute">
             {t('مش عندك حساب؟')}{' '}
-            <Link to="/register" className="font-black text-ink underline hover:text-brand">
+            <Link
+              to={nextParam ? `/register?next=${encodeURIComponent(nextParam)}` : '/register'}
+              className="font-black text-ink underline hover:text-brand"
+            >
               {t('سجّل جديد')}
             </Link>
           </p>

@@ -96,7 +96,7 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
         />
       </Link>
 
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-extrabold text-ink-mute">{tire.brand}</p>
           {tire.brandPhoto && (tire.brandId ? (
@@ -127,15 +127,15 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
           {t('المقاس:')} <span className="ltr font-extrabold text-ink">{tire.size}</span>
         </p>
 
-        <div className="mt-3 flex items-end justify-between">
-          <div>
-            <p className="text-2xl font-black text-ink">{num(tire.price)} <span className="text-sm">{t('جنيه')}</span></p>
+        <div className="mt-3 flex items-end justify-between gap-1">
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-black text-ink">{num(tire.price)} <span className="text-xs sm:text-sm">{t('جنيه')}</span></p>
             {!!tire.oldPrice && (
               <p className="text-xs font-bold text-ink-mute line-through">{fmt(tire.oldPrice)}</p>
             )}
             <p className="text-xs font-bold text-ink-mute">{t('سعر الإطار الواحد')}</p>
           </div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-extrabold ${tire.stock === 'متوفر' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+          <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] sm:text-xs font-extrabold ${tire.stock === 'متوفر' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
             {t(tire.stock)}
           </span>
         </div>
@@ -145,30 +145,30 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
             <p className="text-sm font-extrabold text-amber-800">{t('المنتج غير متوفر حاليًا')}</p>
           </div>
         ) : (
-          <div className="mt-3 rounded-xl bg-muted/70 p-3">
+          <div className="mt-3 rounded-xl bg-muted/70 p-2 sm:p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1" role="group" aria-label="Tire quantity">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   disabled={qty <= 1}
                   aria-label={t('قلل الكمية')}
-                  className="h-9 w-9 rounded-lg bg-white border border-border text-ink font-black hover:border-ink disabled:opacity-40 transition-colors flex items-center justify-center"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-white border border-border text-ink font-black hover:border-ink disabled:opacity-40 transition-colors flex items-center justify-center"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="min-w-10 text-center text-base font-black text-ink">{num(qty)}</span>
+                <span className="min-w-7 sm:min-w-10 text-center text-sm sm:text-base font-black text-ink">{num(qty)}</span>
                 <button
                   onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
                   disabled={qty >= maxQty}
                   aria-label={t('زود الكمية')}
-                  className="h-9 w-9 rounded-lg bg-white border border-border text-ink font-black hover:border-ink disabled:opacity-40 transition-colors flex items-center justify-center"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-white border border-border text-ink font-black hover:border-ink disabled:opacity-40 transition-colors flex items-center justify-center"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
               <div className="text-end">
                 <p className="text-xs font-bold text-ink-mute">{num(tire.price)} × {num(qty)}</p>
-                <p className="text-lg font-black text-ink">{fmt(tire.price * qty)}</p>
+                <p className="text-base sm:text-lg font-black text-ink">{fmt(tire.price * qty)}</p>
               </div>
             </div>
           </div>
@@ -253,7 +253,7 @@ export default function TireShop({
     return (
       <section id="tires" className="bg-paper">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-96 rounded-2xl bg-white border-2 border-border animate-pulse" />
             ))}
@@ -286,7 +286,7 @@ export default function TireShop({
         )}
 
         {list.length > 0 ? (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${showHeader ? 'mt-8' : ''}`}>
+          <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 ${showHeader ? 'mt-8' : ''}`}>
             {list.map((tire) => <TireCard key={tire.id} tire={tire} detailBase="/tires" />)}
           </div>
         ) : (

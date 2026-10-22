@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { Building2, Check, Clock, Phone } from 'lucide-react';
 import { useLang } from '@/i18n';
-import { useWhatsappUrl } from '@/hooks/use-social-media';
+import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { WhatsAppIcon } from '@/components/art';
 import { locationDisplayName } from '@/lib/api';
 import type { AddBookingResultEntry, BusinessLocationWithWebsiteSettingsModel, ServiceModel } from '@/lib/api';
@@ -43,6 +43,18 @@ export function DoneView({
   const { t, isAr, fmt } = useLang();
   const waUrl = useWhatsappUrl();
   const dayLabel = useMemo(() => formatDate(day, isAr), [day, isAr]);
+  const branchName = resolvedBranchName ?? (branch ? locationDisplayName(branch, isAr) : '');
+  const waOrderUrl = useMemo(
+    () =>
+      waTextLink(
+        waUrl,
+        `أهلاً، عملت حجز على الموقع:\nرقم الحجز: ${done}\nالخدمة: ${service.name}` +
+          `${branchName ? `\nالفرع: ${branchName}` : ''}` +
+          `${day ? `\nالموعد: ${dayLabel} — ${slot}` : ''}` +
+          `${phone ? `\nرقم تليفوني: ${phone}` : ''}`,
+      ),
+    [waUrl, done, service.name, branchName, day, dayLabel, slot, phone],
+  );
 
   return (
     <div className="bg-paper">
@@ -104,7 +116,7 @@ export function DoneView({
         <p className="mt-5 text-base font-semibold text-ink-mute">{t('فريقنا هيكلمك على رقمك خلال دقائق لتأكيد الحجز.')}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <a
-            href={waUrl}
+            href={waOrderUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] text-white px-6 h-12 font-black"

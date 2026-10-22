@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { CalendarCheck, Home, LayoutGrid, MapPin, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useCart } from '@/cart';
 import { itemDisplay, useLang } from '@/i18n';
-import { useWhatsappUrl } from '@/hooks/use-social-media';
+import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { WhatsAppIcon } from './art';
 
 export function MobileBottomNav() {
@@ -52,7 +53,7 @@ export function MobileBottomNav() {
 }
 
 export function WhatsAppFloat() {
-  const waUrl = useWhatsappUrl();
+  const waUrl = useWhatsappUrl('أهلاً، عندي استفسار');
   return (
     <a
       href={waUrl}
@@ -70,6 +71,18 @@ export function CartDrawer() {
   const { items, open, setOpen, setQty, remove, total } = useCart();
   const { t, isAr, num, fmt } = useLang();
   const waUrl = useWhatsappUrl();
+  const waOrderUrl = useMemo(
+    () =>
+      waTextLink(
+        waUrl,
+        items.length
+          ? `أهلاً، عايز أأكد الطلب ده:\n${items
+              .map((i) => `- ${i.title}${i.subtitle ? ` ${i.subtitle}` : ''} ×${i.qty} — ${fmt(i.price * i.qty)}`)
+              .join('\n')}\nالإجمالي: ${fmt(total)}`
+          : null,
+      ),
+    [waUrl, items, fmt, total],
+  );
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -93,11 +106,19 @@ export function CartDrawer() {
             items.map((item) => {
               const d = itemDisplay(item.id, item.title, item.subtitle ?? '', t, num);
               return (
-                <div key={item.id} className="rounded-xl border-2 border-border bg-white p-3">
+                <div key={item.id} className={`rounded-xl border-2 bg-white p-3 ${item.available === false ? 'border-red-500/60' : 'border-border'}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-black text-ink">{d.title}</p>
-                      <p className="text-xs font-bold text-ink-mute ltr">{d.sub}</p>
+                    <div className="flex min-w-0 gap-2">
+                      {item.image && (
+                        <img src={item.image} alt={d.title} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-ink">{d.title}</p>
+                        <p className="text-xs font-bold text-ink-mute ltr">{d.sub}</p>
+                        {item.available === false && (
+                          <p className="text-xs font-extrabold text-red-600">{t('غير متاح حاليًا')}</p>
+                        )}
+                      </div>
                     </div>
                     <button onClick={() => remove(item.id)} aria-label={t('حذف')} className="text-ink-mute hover:text-red-600">
                       <Trash2 className="h-4 w-4" />
@@ -105,11 +126,11 @@ export function CartDrawer() {
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setQty(item.id, item.qty + 1)} aria-label={t('زيادة')}
-                        className="h-8 w-8 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border"><Plus className="h-4 w-4" /></button>
+                      <button onClick={() => setQty(item.id, item.qty + 1)} aria-label={t('زيادة')} disabled={item.available === false}
+                        className="h-8 w-8 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border disabled:opacity-40"><Plus className="h-4 w-4" /></button>
                       <span className="w-6 text-center font-black">{num(item.qty)}</span>
-                      <button onClick={() => setQty(item.id, item.qty - 1)} aria-label={t('تقليل')}
-                        className="h-8 w-8 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border"><Minus className="h-4 w-4" /></button>
+                      <button onClick={() => setQty(item.id, item.qty - 1)} aria-label={t('تقليل')} disabled={item.available === false}
+                        className="h-8 w-8 rounded-lg bg-muted inline-flex items-center justify-center hover:bg-border disabled:opacity-40"><Minus className="h-4 w-4" /></button>
                     </div>
                     <p className="text-base font-black text-ink">{fmt(item.price * item.qty)}</p>
                   </div>
@@ -130,7 +151,7 @@ export function CartDrawer() {
               className="flex items-center justify-center gap-2 rounded-xl bg-brand text-coal h-12 text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all">
               {t('إتمام الطلب')}
             </Link>
-            <a href={waUrl} target="_blank" rel="noreferrer"
+            <a href={waOrderUrl} target="_blank" rel="noreferrer"
               className="flex items-center justify-center gap-2 rounded-xl border-2 border-border h-11 text-sm font-black text-ink hover:border-ink transition-colors">
               <WhatsAppIcon className="h-4 w-4 text-[#25D366]" /> {t('أو أكد الطلب واتساب')}
             </a>

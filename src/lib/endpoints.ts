@@ -84,10 +84,17 @@ export const ENDPOINTS = {
   jobOrderPhoneCheck: `${API_BASE}/contact/check/phone/joborder`,
   ecomProducts: `${API_BASE}/connector/api/public/ecom-products`,
   ecomProductsInfinite: `${API_BASE}/connector/api/public/ecom-products-infinite`,
+  ecomProductsFeatured: `${API_BASE}/connector/api/public/ecom-products/featured`,
+  ecomProductsBestSell: `${API_BASE}/connector/api/public/ecom-products/best-sell`,
+  ecomProductsSearch: `${API_BASE}/connector/api/public/ecom-products-search`,
+  ecomSliders: `${API_BASE}/connector/api/public/ecom-sliders`,
   categoryItemNextLevel: (itemId: number) => `${API_BASE}/connector/api/public/category-items/${itemId}/next-level-direct`,
   sellProforma: `${API_BASE}/connector/api/sell/proforma`,
 
   // E-commerce checkout
+  ecomCart: `${API_BASE}/connector/api/ecommerce/cart`,
+  ecomCartItems: `${API_BASE}/connector/api/ecommerce/cart/items`,
+  ecomCartItem: (itemId: number) => `${API_BASE}/connector/api/ecommerce/cart/items/${itemId}`,
   ecomOrders: `${API_BASE}/connector/api/ecommerce/orders`,
   ecomOrder: (id: number) => `${API_BASE}/connector/api/ecommerce/orders/${id}`,
   ecomOrderCancel: (id: number) => `${API_BASE}/connector/api/ecommerce/orders/${id}/cancel`,

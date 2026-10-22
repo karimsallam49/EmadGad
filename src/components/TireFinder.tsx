@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { BadgeCheck, CarFront, Ruler, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { BadgeCheck, CarFront, Loader2, Ruler, Search, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CARS, YEARS } from '@/data';
@@ -7,6 +7,8 @@ import { useBrands } from '@/hooks/use-brands';
 import { useModels } from '@/hooks/use-models';
 import { useTaxonomy } from '@/hooks/use-taxonomy';
 import { useNextLevelItems } from '@/hooks/use-next-level-items';
+import { useEcomProductSearch } from '@/hooks/use-home-content';
+import { productDetailPath } from '@/components/TireShop';
 import { useLang } from '@/i18n';
 import type { CategoryLevelItemModel, CategoryLevelNameModel } from '@/types/api';
 
@@ -87,6 +89,19 @@ function LevelSelect({ level, parentItemId, selectedItemId, disabledHint, onSele
 export function TireFinderForm({ onSearch }: Props) {
   const { t, isAr } = useLang();
 
+  const [tab, setTab] = useState('size');
+  const [query, setQuery] = useState('');
+  const [debounced, setDebounced] = useState('');
+  const [dropOpen, setDropOpen] = useState(false);
+  const searchQuery = useEcomProductSearch(debounced, 10);
+  const suggestions = searchQuery.data ?? [];
+
+  // debounce the search input — no request per keystroke
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(query.trim()), 400);
+    return () => clearTimeout(id);
+  }, [query]);
+
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const defaultYear = YEARS.find((y) => y === new Date().getFullYear()) ?? YEARS[0];
@@ -136,7 +151,12 @@ export function TireFinderForm({ onSearch }: Props) {
     return CARS.find((c) => c.make === brandName)?.models.find((m) => m.model === modelName)?.tireSize;
   }, [brandName, modelName]);
 
-  const canSearch = (selectedBrand && selectedModel && year) || Object.keys(selectedByLevel).length > 0;
+  const canSearch =
+    tab === 'product'
+      ? debounced.length >= 2 || query.trim().length >= 2
+      : tab === 'car'
+        ? !!(selectedBrand && selectedModel && year)
+        : Object.keys(selectedByLevel).length > 0;
 
   const handleBrandChange = (value: string) => {
     setSelectedBrand(value);
@@ -160,13 +180,16 @@ export function TireFinderForm({ onSearch }: Props) {
 
   return (
     <div className="rounded-2xl border-2 border-ink bg-white p-5 sm:p-6 shadow-[0_10px_0_#f6c744]">
-      <Tabs defaultValue="size" dir={isAr ? 'rtl' : 'ltr'}>
-        <TabsList className="grid w-full grid-cols-2 h-12 rounded-xl bg-muted p-1">
-          <TabsTrigger value="size" className="rounded-lg text-sm sm:text-base font-extrabold data-[state=active]:bg-coal data-[state=active]:text-brand">
-            <Ruler className="h-5 w-5 me-2" /> {t('دخل مقاس الإطار')}
+      <Tabs value={tab} onValueChange={setTab} dir={isAr ? 'rtl' : 'ltr'}>
+        <TabsList className="grid w-full grid-cols-3 h-12 rounded-xl bg-muted p-1">
+          <TabsTrigger value="size" className="rounded-lg text-xs sm:text-sm font-extrabold data-[state=active]:bg-coal data-[state=active]:text-brand">
+            <Ruler className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 shrink-0" /> <span className="truncate">{t('دخل مقاس الإطار')}</span>
           </TabsTrigger>
-          <TabsTrigger value="car" className="rounded-lg text-sm sm:text-base font-extrabold data-[state=active]:bg-coal data-[state=active]:text-brand">
-            <CarFront className="h-5 w-5 me-2" /> {t('اختار عربيتك')}
+          <TabsTrigger value="car" className="rounded-lg text-xs sm:text-sm font-extrabold data-[state=active]:bg-coal data-[state=active]:text-brand">
+            <CarFront className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 shrink-0" /> <span className="truncate">{t('اختار عربيتك')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="product" className="rounded-lg text-xs sm:text-sm font-extrabold data-[state=active]:bg-coal data-[state=active]:text-brand">
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 shrink-0" /> <span className="truncate">{t('البحث حسب المنتج')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -279,13 +302,100 @@ export function TireFinderForm({ onSearch }: Props) {
             </p>
           )}
         </TabsContent>
+
+        <TabsContent value="product" className="mt-5 space-y-4">
+          <Field label={t('اسم المنتج')}>
+            <div className="relative">
+              <Search className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-mute" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setDropOpen(true);
+                }}
+                onFocus={() => setDropOpen(true)}
+                onBlur={() => setTimeout(() => setDropOpen(false), 150)}
+                placeholder={t('اكتب اسم المنتج...')}
+                className="h-12 w-full rounded-xl border-2 border-border bg-white ps-11 pe-10 font-bold text-base focus:ring-brand"
+              />
+              {searchQuery.isFetching ? (
+                <Loader2 className="absolute end-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-ink-mute" />
+              ) : (
+                query && (
+                  <button
+                    type="button"
+                    aria-label={t('مسح')}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setQuery('');
+                      setDebounced('');
+                      setDropOpen(false);
+                    }}
+                    className="absolute end-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-ink-mute hover:bg-muted"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )
+              )}
+              {dropOpen && debounced.length >= 2 && (
+                <div className="absolute inset-x-0 top-full z-20 mt-2 max-h-80 overflow-y-auto rounded-xl border-2 border-border bg-white shadow-lg">
+                  {searchQuery.isFetching ? (
+                    <p className="flex items-center gap-2 px-4 py-3 text-sm font-bold text-ink-mute">
+                      <Loader2 className="h-4 w-4 animate-spin" /> {t('جاري البحث...')}
+                    </p>
+                  ) : suggestions.length ? (
+                    <ul>
+                      {suggestions.slice(0, 10).map((p) => (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setDropOpen(false);
+                              onSearch(productDetailPath({ id: p.id, category_id: p.category_id }));
+                            }}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-start hover:bg-muted"
+                          >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                              {p.image_url ?? p.images?.[0] ? (
+                                <img
+                                  src={p.image_url ?? p.images?.[0]}
+                                  alt=""
+                                  loading="lazy"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Search className="h-4 w-4 text-ink-mute" />
+                              )}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-black text-ink">{p.name}</span>
+                              {p.brand_name && (
+                                <span className="block truncate text-xs font-bold text-ink-mute">{p.brand_name}</span>
+                              )}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="px-4 py-3 text-sm font-bold text-ink-mute">{t('لا توجد منتجات')}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </Field>
+        </TabsContent>
       </Tabs>
 
       <button
         disabled={!canSearch}
         onClick={() => {
           if (!canSearch) return;
-          if (selectedBrand && selectedModel && year) {
+          if (tab === 'product') {
+            onSearch(`/products?q=${encodeURIComponent(query.trim() || debounced)}`);
+          } else if (tab === 'car') {
             onSearch(
               usingApiBrands
                 ? `/products?business_id=1&car_brand_id=${selectedBrand}&car_model_id=${selectedModel}&car_year=${year}`
@@ -297,7 +407,7 @@ export function TireFinderForm({ onSearch }: Props) {
         }}
         className="mt-5 w-full rounded-xl bg-coal text-brand h-14 text-lg font-black shadow-[0_6px_0_#00000055] hover:translate-y-[2px] hover:shadow-[0_4px_0_#00000055] transition-all disabled:opacity-40 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
       >
-        {t('اعرض الإطارات المناسبة')}
+        {tab === 'size' ? t('اعرض الإطارات المناسبة') : t('اعرض المنتجات المناسبه')}
       </button>
     </div>
   );

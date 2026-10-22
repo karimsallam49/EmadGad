@@ -62,37 +62,39 @@ export function Brands() {
     ? brands
     : BRAND_STRIP.map((name) => ({ name, id: undefined as number | undefined, photo: null as string | null }));
 
-  const chipCls =
-    'flex items-center gap-2.5 whitespace-nowrap rounded-xl border-2 border-ink/10 bg-paper px-6 py-2.5 text-lg font-black uppercase tracking-widest text-ink/35 transition-colors hover:border-ink hover:text-ink';
+  const chipBase =
+    'flex items-center justify-center whitespace-nowrap rounded-xl border-2 border-ink/10 bg-paper transition-colors hover:border-ink';
+  const chipCls = `${chipBase} gap-2.5 px-6 py-2.5 text-lg font-black uppercase tracking-widest text-ink/35 hover:text-ink`;
+  const logoChipCls = `${chipBase} px-4 py-2`;
 
   return (
     <section aria-label="الماركات المتاحة" className="bg-white border-y border-border overflow-hidden">
       <div className="py-5">
         <div className="flex w-max animate-marquee-rtl gap-4 px-6 items-center" dir="ltr">
           {[...strip, ...strip].map((b, i) => {
-            const inner = (
-              <>
-                {b.photo && (
-                  <img
-                    src={b.photo}
-                    alt=""
-                    loading="lazy"
-                    className="h-7 w-7 shrink-0 rounded-full bg-white object-contain"
-                  />
-                )}
-                {b.name}
-              </>
+            const cls = b.photo ? logoChipCls : chipCls;
+            const inner = b.photo ? (
+              <img
+                src={b.photo}
+                alt={b.name}
+                title={b.name}
+                loading="lazy"
+                className="h-9 w-auto min-w-9 object-contain"
+              />
+            ) : (
+              b.name
             );
             return b.id ? (
               <Link
                 key={`${b.name}-${i}`}
                 to={`/products?business_id=1&device_brand_id=${b.id}&brand_name=${encodeURIComponent(b.name)}`}
-                className={chipCls}
+                className={cls}
+                aria-label={b.name}
               >
                 {inner}
               </Link>
             ) : (
-              <span key={`${b.name}-${i}`} className={chipCls}>
+              <span key={`${b.name}-${i}`} className={cls}>
                 {inner}
               </span>
             );

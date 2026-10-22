@@ -129,7 +129,7 @@ export default function TaxonomyPage() {
 
         {/* products */}
         {isLoading ? (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-96 animate-pulse rounded-2xl border-2 border-border bg-white" />
             ))}
@@ -141,7 +141,7 @@ export default function TaxonomyPage() {
             </p>
           </div>
         ) : list.length > 0 ? (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
             {list.map((tire) => (
               <TireCard key={tire.id} tire={tire} />
             ))}

@@ -6,7 +6,7 @@ import RescueDialog from './RescueDialog';
 
 export function MobileService() {
   const { t, num } = useLang();
-  const waUrl = useWhatsappUrl();
+  const waUrl = useWhatsappUrl('أهلاً، عايز أطلب خدمة متنقلة');
   const [rescueOpen, setRescueOpen] = useState(false);
   const steps = [
     { t: 'اطلب الخدمة', d: 'واتساب أو مكالمة — قولنا محتاج إيه وفين' },

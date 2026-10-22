@@ -9,6 +9,7 @@ import {
   CheckCheck,
   Trash2,
   Loader2,
+  ShoppingCart,
 } from 'lucide-react';
 import { useLang } from '@/i18n';
 import { useAuth } from '@/auth';
@@ -27,6 +28,7 @@ function notifIcon(type?: string) {
     case 'offer': return BadgePercent;
     case 'order': return Package;
     case 'booking': case 'service': return Wrench;
+    case 'cart_price_update': case 'cart_low_stock': case 'back_in_stock': return ShoppingCart;
     default: return Bell;
   }
 }
@@ -34,6 +36,9 @@ function notifIcon(type?: string) {
 function notifLink(n: UserNotificationModel): string | null {
   if (n.type === 'offer' && n.reference_id) return `/offers/${n.reference_id}`;
   if (n.type === 'order' || n.type === 'booking') return '/profile';
+  // cart updates can bundle several products — the cart is the safest target
+  if (n.type === 'cart_price_update' || n.type === 'cart_low_stock') return '/cart';
+  if (n.type === 'back_in_stock') return n.reference_id ? `/products/${n.reference_id}` : '/cart';
   return null;
 }
 

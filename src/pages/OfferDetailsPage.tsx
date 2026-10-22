@@ -4,7 +4,7 @@ import { useLang } from '@/i18n';
 import { useOffer } from '@/hooks/use-offers';
 import { productPrice, useApplyOffer } from '@/hooks/use-apply-offer';
 import { storageUrl } from '@/lib/api';
-import { useWhatsappUrl } from '@/hooks/use-social-media';
+import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { WhatsAppIcon } from '@/components/art';
 import InstagramEmbed from '@/components/InstagramEmbed';
 
@@ -224,7 +224,7 @@ export default function OfferDetailsPage() {
                   {t('اتسوق واستفد من العرض')}
                 </Link>
               )}
-              <a href={waUrl} target="_blank" rel="noreferrer"
+              <a href={waTextLink(waUrl, `أهلاً، عندي استفسار عن العرض: ${title}`)} target="_blank" rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border-2 border-ink px-6 h-14 font-black text-ink hover:bg-coal hover:text-brand transition-colors">
                 <WhatsAppIcon className="h-5 w-5 text-[#25D366]" /> {t('اسأل على واتساب')}
               </a>

@@ -73,7 +73,7 @@ export default function Header() {
   const { user } = useAuth();
   const { count } = useCart();
   const { t, num } = useLang();
-  const waUrl = useWhatsappUrl();
+  const waUrl = useWhatsappUrl('أهلاً، عندي استفسار');
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 

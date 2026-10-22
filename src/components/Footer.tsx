@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import { Facebook, Instagram, MapPin, Phone } from 'lucide-react';
 import { PHONE_NUMBER, SOCIAL, WHATSAPP_URL } from '@/data';
 import { useBusinessLocations } from '@/hooks/use-business-locations';
-import { useSocialMedia, useWhatsappUrl } from '@/hooks/use-social-media';
+import { useSocialMedia, useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { useLang } from '@/i18n';
 import { WhatsAppIcon } from './art';
 
@@ -61,7 +61,7 @@ export default function Footer() {
   const { t, isAr, num } = useLang();
   const { data: locations } = useBusinessLocations();
   const { data: socials } = useSocialMedia();
-  const whatsappUrl = useWhatsappUrl();
+  const whatsappUrl = useWhatsappUrl('أهلاً، عندي استفسار');
 
   const branchNames = (locations ?? [])
     .filter((l) => l.website_settings?.is_visible !== false)
@@ -106,7 +106,7 @@ export default function Footer() {
                   : /whats/i.test(s.name) || /wa\.me|whatsapp/i.test(s.link) ? WhatsAppIcon
                   : null;
                 return (
-                  <a key={s.id} href={s.link} target="_blank" rel="noreferrer" aria-label={s.name}
+                  <a key={s.id} href={/whats/i.test(s.name) || /wa\.me|whatsapp/i.test(s.link) ? waTextLink(s.link, 'أهلاً، عندي استفسار') : s.link} target="_blank" rel="noreferrer" aria-label={s.name}
                     className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-brand hover:text-coal transition-colors">
                     {s.icon_url ? (
                       <img src={s.icon_url} alt="" loading="lazy" className="h-5 w-5 object-contain" />
@@ -122,7 +122,7 @@ export default function Footer() {
                 <>
                   <a href={SOCIAL.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-brand hover:text-coal transition-colors"><Facebook className="h-5 w-5" /></a>
                   <a href={SOCIAL.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-brand hover:text-coal transition-colors"><Instagram className="h-5 w-5" /></a>
-                  <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-brand hover:text-coal transition-colors"><WhatsAppIcon className="h-5 w-5" /></a>
+                  <a href={waTextLink(WHATSAPP_URL, 'أهلاً، عندي استفسار')} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-brand hover:text-coal transition-colors"><WhatsAppIcon className="h-5 w-5" /></a>
                 </>
               )}
             </div>

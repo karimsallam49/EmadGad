@@ -15,11 +15,20 @@ export function useSocialMedia() {
   });
 }
 
-/** WhatsApp link from the API socials, falling back to the static URL */
-export function useWhatsappUrl() {
+/** Append a prefilled message to a WhatsApp link.
+ *  wa.me/qr short links don't support ?text — use the direct number instead. */
+export function waTextLink(base: string, text?: string | null) {
+  if (!text) return base;
+  const target = /\/qr\//i.test(base) ? WHATSAPP_URL : base;
+  return `${target}${target.includes('?') ? '&' : '?'}text=${encodeURIComponent(text)}`;
+}
+
+/** WhatsApp link from the API socials, falling back to the static URL.
+ *  Pass `text` to prefill the chat message. */
+export function useWhatsappUrl(text?: string) {
   const { data } = useSocialMedia();
   const wa = data?.find(
     (s) => /whats/i.test(s.name) || /wa\.me|whatsapp/i.test(s.link)
   );
-  return wa?.link ?? WHATSAPP_URL;
+  return waTextLink(wa?.link ?? WHATSAPP_URL, text);
 }

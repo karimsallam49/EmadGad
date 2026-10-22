@@ -59,6 +59,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import type { ApiError } from '@/lib/api';
 import type { CustomerBookingModel, CustomerCarModel, CustomerJobOrderModel, EcomOrderModel } from '@/types/api';
 
 type Tab = 'info' | 'orders' | 'bookings' | 'joborders' | 'invoices' | 'alerts';
@@ -772,11 +773,19 @@ function AlertsTab() {
 
 /* ------------------------------ KM (odometer) ------------------------------ */
 
-function KmDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+function KmDialog({
+  open,
+  onOpenChange,
+  car,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  car: CustomerCarModel;
+}) {
   const { t, num } = useLang();
-  const { data: km } = useContactKm();
-  const update = useUpdateContactKm();
-  const scan = useScanContactKm();
+  const { data: km } = useContactKm(car.id);
+  const update = useUpdateContactKm(car.id);
+  const scan = useScanContactKm(car.id);
 
   const [value, setValue] = useState('');
   const [warning, setWarning] = useState<string | null>(null);
@@ -817,7 +826,12 @@ function KmDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
       setValue('');
       setWarning(null);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t('فشل تحديث العداد');
+      const msg =
+        (err as ApiError).status === 422
+          ? t('القراءة الجديدة لازم تكون أكبر من آخر قراءة مسجلة')
+          : err instanceof Error
+            ? err.message
+            : t('فشل تحديث العداد');
       setError(current != null ? `${msg} — ${t('آخر قراءة')}: ${num(current)}` : msg);
     }
   };
@@ -833,6 +847,7 @@ function KmDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
             {t('عداد الكيلومترات')}
           </DialogTitle>
           <DialogDescription className="text-sm font-bold text-ink-mute">
+            <span className="mb-1 block font-black text-ink ltr">{carTitle(car, t)}</span>
             {current != null
               ? `${t('آخر قراءة مسجلة')}: ${num(current)} ${t('كم')} — ${t('الرقم الجديد لازم يكون أكبر')}`
               : t('مفيش قراءة سابقة — ادخل قراءة عداد عربيتك')}
@@ -899,13 +914,12 @@ function KmDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
   );
 }
 
-function KmDisplay() {
+function KmDisplay({ car }: { car: CustomerCarModel | null }) {
   const { t } = useLang();
-  const { user } = useAuth();
-  const { data: km, isLoading } = useContactKm();
+  const { data: km, isLoading } = useContactKm(car?.id);
   const [open, setOpen] = useState(false);
 
-  if ((user?.cars?.length ?? 0) === 0) {
+  if (!car) {
     return (
       <AddCarDialog
         trigger={
@@ -960,9 +974,12 @@ function KmDisplay() {
           <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/45">
             <Gauge className="h-3.5 w-3.5 text-brand" />
             {t('عداد الكيلومترات')}
+            <span className="font-bold normal-case tracking-normal text-white/30 ltr">
+              — {carTitle(car, t)}
+            </span>
             {km?.source && (
               <span className="font-bold normal-case tracking-normal text-white/30">
-                — {km.source === 'contact' ? t('من سجلك') : km.source === 'jobsheet' ? t('من آخر أمر عمل') : ''}
+                — {km.source === 'contact' || km.source === 'car' ? t('من سجلك') : km.source === 'jobsheet' ? t('من آخر أمر عمل') : ''}
               </span>
             )}
           </p>
@@ -993,20 +1010,42 @@ function KmDisplay() {
           <Pencil className="h-4 w-4" />
         </span>
       </button>
-      <KmDialog open={open} onOpenChange={setOpen} />
+      <KmDialog open={open} onOpenChange={setOpen} car={car} />
     </>
   );
 }
 
 /* ------------------------------ Cars ------------------------------ */
 
-function CarChip({ car }: { car: CustomerCarModel }) {
+function carTitle(car: CustomerCarModel, t: (s: string) => string) {
+  const brand = car.device ?? car.brand_name ?? car.car_brand ?? car.make;
+  return [brand, car.model, car.manufacturing_year].filter(Boolean).join(' ') || t('عربية');
+}
+
+function CarChip({
+  car,
+  selected,
+  onSelect,
+}: {
+  car: CustomerCarModel;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const { t } = useLang();
   const img = car.car_logo || car.car_image || car.model_image;
-  const brand = car.device ?? car.brand_name ?? car.car_brand ?? car.make;
-  const title = [brand, car.model, car.manufacturing_year].filter(Boolean).join(' ') || t('عربية');
+  const title = carTitle(car, t);
   return (
-    <div className="inline-flex items-center gap-2.5 rounded-full border-2 border-ink bg-white py-1.5 pe-5 ps-1.5 shadow-[0_3px_0_#f6c744]">
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      title={title}
+      className={`inline-flex items-center gap-2.5 rounded-full border-2 py-1.5 pe-5 ps-1.5 transition-all ${
+        selected
+          ? 'border-ink bg-white shadow-[0_3px_0_#f6c744]'
+          : 'border-ink/15 bg-white/70 hover:border-ink/40'
+      }`}
+    >
       <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
         {img ? (
           <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -1015,11 +1054,20 @@ function CarChip({ car }: { car: CustomerCarModel }) {
         )}
       </span>
       <span className="whitespace-nowrap text-sm font-black text-ink ltr">{title}</span>
-    </div>
+      {selected && <Check className="h-4 w-4 shrink-0 text-brand" />}
+    </button>
   );
 }
 
-function CarsStrip({ cars }: { cars: CustomerCarModel[] }) {
+function CarsStrip({
+  cars,
+  selectedId,
+  onSelect,
+}: {
+  cars: CustomerCarModel[];
+  selectedId: number | null;
+  onSelect: (id: number) => void;
+}) {
   const { isAr } = useLang();
   if (cars.length === 0) {
     return (
@@ -1037,7 +1085,7 @@ function CarsStrip({ cars }: { cars: CustomerCarModel[] }) {
         <CarouselContent className="-ml-2.5 items-center">
           {cars.map((car) => (
             <CarouselItem key={car.id} className="basis-auto pl-2.5">
-              <CarChip car={car} />
+              <CarChip car={car} selected={car.id === selectedId} onSelect={() => onSelect(car.id)} />
             </CarouselItem>
           ))}
           <CarouselItem className="basis-auto pl-2.5">
@@ -1899,6 +1947,8 @@ export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('info');
+  const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -1924,11 +1974,13 @@ export default function ProfilePage() {
 
   const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.name || t('عميلنا');
   const initial = fullName.trim().charAt(0) || '؟';
+  const cars = user.cars ?? [];
+  const selectedCar = cars.find((c) => c.id === selectedCarId) ?? cars[0] ?? null;
 
   return (
     <div className="bg-paper min-h-screen">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
-        <CarsStrip cars={user.cars ?? []} />
+        <CarsStrip cars={cars} selectedId={selectedCar?.id ?? null} onSelect={setSelectedCarId} />
 
         {/* Profile hero */}
         <section className="relative overflow-hidden rounded-3xl bg-coal border-2 border-ink shadow-[0_8px_0_#191919]">
@@ -1971,7 +2023,7 @@ export default function ProfilePage() {
                   <span>{t('احجز خدمة')}</span>
                 </Link>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setConfirmLogout(true)}
                   className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-white/20 text-white/90 hover:bg-white/10 transition-colors sm:h-14 sm:w-auto sm:px-5 sm:gap-2"
                   title={t('تسجيل الخروج')}
                 >
@@ -1981,7 +2033,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <KmDisplay />
+            <KmDisplay car={selectedCar} />
           </div>
         </section>
 
@@ -2021,6 +2073,33 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={confirmLogout} onOpenChange={setConfirmLogout}>
+        <DialogContent className="rounded-2xl border-2 border-ink bg-white sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-black text-ink">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                <LogOut className="h-5 w-5" />
+              </span>
+              {t('تسجيل الخروج')}
+            </DialogTitle>
+            <DialogDescription className="text-sm font-bold text-ink-mute">
+              {t('هل أنت متأكد إنك عايز تسجّل خروج؟')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button onClick={() => setConfirmLogout(false)} className={ghostBtn}>
+              {t('إلغاء')}
+            </button>
+            <button
+              onClick={handleLogout}
+              className={`${primaryBtn} !bg-red-600 !text-white`}
+            >
+              <LogOut className="h-4 w-4" /> {t('آه، سجّل خروج')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

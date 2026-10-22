@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowRight, Minus, Plus, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { useCart } from '@/cart';
 import { useLang } from '@/i18n';
-import { useWhatsappUrl } from '@/hooks/use-social-media';
+import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { useProduct } from '@/hooks/use-product';
 import { useEcomProducts } from '@/hooks/use-ecom-products';
 import { WhatsAppIcon } from '@/components/art';
@@ -262,7 +262,7 @@ export function ProductDetail({ cfg }: { cfg: ProductDetailConfig }) {
 
             <ProductOffers productId={product.id} variationId={variationId} />
 
-            <a href={waUrl} target="_blank" rel="noreferrer"
+            <a href={waTextLink(waUrl, `أهلاً، عايز أسأل عن المنتج ده:\n${product.name}${variationName ? ` — ${variationName}` : ''}\nالسعر: ${fmt(price)}`)} target="_blank" rel="noreferrer"
               className="mt-6 inline-flex items-center gap-2 text-base font-black text-ink underline underline-offset-8 decoration-brand decoration-2 hover:decoration-4">
               <WhatsAppIcon className="h-5 w-5 text-[#25D366]" /> {t(cfg.whatsappText)}
             </a>
@@ -272,7 +272,7 @@ export function ProductDetail({ cfg }: { cfg: ProductDetailConfig }) {
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl sm:text-3xl font-black text-ink">{t(cfg.relatedTitle)}</h2>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
               {related.map((p) => cfg.renderRelatedCard(p))}
             </div>
           </div>

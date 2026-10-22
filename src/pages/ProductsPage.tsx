@@ -1,5 +1,6 @@
 import { useProducts } from '@/hooks/use-products';
 import { useEcomProducts } from '@/hooks/use-ecom-products';
+import { useEcomProductSearch } from '@/hooks/use-home-content';
 import { TireCard, toTire } from '@/components/TireShop';
 import { useSearchParams } from 'react-router';
 import type { Tire } from '@/data';
@@ -35,7 +36,7 @@ function ProductGrid({ title, titleSuffix, items, brandLogo }: { title: string; 
         )}
 
         {items.length > 0 ? (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
             {items.map((tire) => (
               <TireCard key={tire.id} tire={tire} />
             ))}
@@ -145,9 +146,41 @@ function ProductCatalog() {
   );
 }
 
+/** Search results — GET /public/ecom-products-search?q= (from the hero search tab) */
+function SearchedProducts({ q }: { q: string }) {
+  const { t } = useLang();
+  const { data, isLoading, isError, error } = useEcomProductSearch(q, 100);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center bg-paper">
+        <p className="text-xl font-black text-ink-mute">{t('جاري تحميل المنتجات...')}</p>
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center bg-paper px-4">
+        <p className="text-center text-lg font-bold text-red-700">
+          {error instanceof Error ? error.message : t('خطأ غير معروف')}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <ProductGrid
+      title="المنتجات المناسبه"
+      titleSuffix={`“${q}”`}
+      items={(data ?? []).map(toTire)}
+    />
+  );
+}
+
 export default function ProductsPage() {
   const [params] = useSearchParams();
 
+  const q = params.get('q')?.trim();
   const businessId = Number(params.get('business_id'));
   const carBrandId = Number(params.get('car_brand_id'));
   const carModelId = Number(params.get('car_model_id'));
@@ -155,6 +188,10 @@ export default function ProductsPage() {
   const categoryId = Number(params.get('category_id'));
   const deviceBrandId = Number(params.get('device_brand_id'));
   const brandName = params.get('brand_name');
+
+  if (q) {
+    return <SearchedProducts q={q} />;
+  }
 
   if (deviceBrandId) {
     return (

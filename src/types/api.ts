@@ -501,6 +501,20 @@ export interface EcomProductInfiniteModel {
   };
 }
 
+export interface EcomSliderLink {
+  type?: 'product' | 'category' | string;
+  id?: number;
+  name?: string;
+}
+
+export interface EcomSliderModel {
+  id: number;
+  media_url?: string;
+  media_type?: 'image' | 'video' | string;
+  sort_order?: number;
+  link?: EcomSliderLink | null;
+}
+
 export interface TaxonomyCategoryModel {
   id: number;
   name: string;
@@ -890,6 +904,51 @@ export interface UserNotificationModel {
 export interface UserNotificationsResult {
   data: UserNotificationModel[];
   meta?: { current_page?: number; last_page?: number; per_page?: number; total?: number };
+}
+
+// ==================== E-Commerce Cart Models ====================
+
+export interface EcomCartItemModel {
+  /** cart line id — used by PUT/DELETE items/{id} */
+  id: number;
+  product_id: number;
+  product_name?: string;
+  product_image?: string | null;
+  variation_id?: number | null;
+  variation_name?: string | null;
+  quantity: number;
+  unit_price?: number;
+  discount_on_product?: number;
+  discount_type?: 'fixed' | 'percentage' | null;
+  /** live server price after product discount — always display this */
+  final_unit_price?: number;
+  line_total?: number;
+  is_available?: boolean;
+  note?: string | null;
+}
+
+export interface EcomCartModel {
+  id?: number;
+  contact_id?: number;
+  items: EcomCartItemModel[];
+  items_count?: number;
+  total_quantity?: number;
+  subtotal?: number;
+}
+
+export interface EcomAddCartItemBody {
+  product_id: number;
+  variation_id?: number;
+  quantity: number;
+  note?: string;
+  /** staff tokens only — customer tokens resolve their own contact */
+  contact_id?: number;
+}
+
+export interface EcomUpdateCartItemBody {
+  quantity?: number;
+  note?: string | null;
+  contact_id?: number;
 }
 
 // ==================== E-Commerce Checkout Models ====================
