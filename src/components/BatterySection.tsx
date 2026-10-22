@@ -35,7 +35,7 @@ export function ApiProductCard({
     <article className="flex flex-col rounded-2xl border-2 border-border bg-white overflow-hidden transition-colors hover:border-ink">
       <Link to={detailTo} className="relative block aspect-[4/3] bg-muted/40 overflow-hidden" aria-label={p.name}>
         {discount > 0 && (
-          <span className="absolute z-10 top-3 start-3 rounded-full px-3 py-1 text-xs font-black bg-red-600 text-white">
+          <span className="absolute z-10 top-2 start-2 sm:top-3 sm:start-3 rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black bg-red-600 text-white">
             {t('خصم')} {p.discount_type === 'percentage' ? `${num(discount)}%` : fmt(discount)}
           </span>
         )}
@@ -65,19 +65,19 @@ export function ApiProductCard({
             />
           ))}
         </div>
-        <Link to={detailTo} className="mt-1 text-base sm:text-lg font-black text-ink hover:underline underline-offset-4">
+        <Link to={detailTo} className="mt-1 line-clamp-2 text-sm sm:text-lg font-black text-ink hover:underline underline-offset-4">
           {p.name}
         </Link>
         {p.variation?.name && p.variation.name !== 'DUMMY' && (
-          <p className="mt-1 text-xs font-bold text-ink-mute">{p.variation.name}</p>
+          <p className="mt-1 truncate text-xs font-bold text-ink-mute">{p.variation.name}</p>
         )}
-        <div className="mt-3">
-          <p className="text-xl sm:text-2xl font-black text-ink ltr">{fmt(price)}</p>
+        <div className="mt-2 sm:mt-3">
+          <p className="whitespace-nowrap text-base sm:text-2xl font-black text-ink ltr">{fmt(price)}</p>
           {disc > 0 && disc < base && (
-            <p className="text-xs font-bold text-ink-mute line-through">{fmt(base)}</p>
+            <p className="truncate text-xs font-bold text-ink-mute line-through">{fmt(base)}</p>
           )}
         </div>
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2 sm:pt-3">
           {outOfStock ? (
             <NotifyMeButton productId={p.id} variationId={p.variation_id ?? p.variation?.id} />
           ) : (

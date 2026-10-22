@@ -81,12 +81,12 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
     <article className="flex flex-col rounded-2xl border-2 border-border bg-white overflow-hidden hover:border-ink transition-colors">
       <Link to={detailTo} className="relative block aspect-square bg-muted/40 overflow-hidden" aria-label={`${tire.brand} ${tire.model}`}>
         {!!tire.discountValue && (
-          <span className="absolute z-10 top-3 start-3 rounded-full px-3 py-1 text-xs font-black bg-red-600 text-white">
+          <span className="absolute z-10 top-2 start-2 sm:top-3 sm:start-3 rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black bg-red-600 text-white">
             {t('خصم')} {tire.discountType === 'percentage' ? `${num(tire.discountValue)}%` : fmt(tire.discountValue)}
           </span>
         )}
         {!tire.discountValue && tire.badge && (
-          <span className={`absolute z-10 top-3 start-3 rounded-full px-3 py-1 text-xs font-black ${badgeStyle[tire.badge]}`}>
+          <span className={`absolute z-10 top-2 start-2 sm:top-3 sm:start-3 rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black ${badgeStyle[tire.badge]}`}>
             {t(tire.badge)}
           </span>
         )}
@@ -98,7 +98,7 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
 
       <div className="flex flex-1 flex-col p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-extrabold text-ink-mute">{tire.brand}</p>
+          <p className="min-w-0 truncate text-xs sm:text-sm font-extrabold text-ink-mute">{tire.brand}</p>
           {tire.brandPhoto && (tire.brandId ? (
             <Link
               to={`/products?business_id=1&device_brand_id=${tire.brandId}&brand_name=${encodeURIComponent(tire.brand)}`}
@@ -108,7 +108,7 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
                 src={tire.brandPhoto}
                 alt={tire.brand}
                 loading="lazy"
-                className="h-8 w-8 shrink-0 rounded-full border border-border bg-[#ffffff] object-contain hover:border-ink transition-colors"
+                className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 rounded-full border border-border bg-[#ffffff] object-contain hover:border-ink transition-colors"
               />
             </Link>
           ) : (
@@ -116,24 +116,24 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
               src={tire.brandPhoto}
               alt={tire.brand}
               loading="lazy"
-              className="h-8 w-8 shrink-0 rounded-full border border-border bg-[#ffffff] object-contain"
+              className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 rounded-full border border-border bg-[#ffffff] object-contain"
             />
           ))}
         </div>
-        <Link to={detailTo} className="mt-1 text-lg font-black text-ink hover:underline underline-offset-4">
+        <Link to={detailTo} className="mt-1 truncate text-sm sm:text-lg font-black text-ink hover:underline underline-offset-4">
           {tire.model}
         </Link>
-        <p className="mt-0.5 text-sm font-bold text-ink-mute">
+        <p className="mt-0.5 truncate text-xs sm:text-sm font-bold text-ink-mute">
           {t('المقاس:')} <span className="ltr font-extrabold text-ink">{tire.size}</span>
         </p>
 
-        <div className="mt-3 flex items-end justify-between gap-1">
+        <div className="mt-2 sm:mt-3 flex items-end justify-between gap-1">
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-black text-ink">{num(tire.price)} <span className="text-xs sm:text-sm">{t('جنيه')}</span></p>
+            <p className="whitespace-nowrap text-base sm:text-2xl font-black text-ink">{num(tire.price)} <span className="text-[10px] sm:text-sm">{t('جنيه')}</span></p>
             {!!tire.oldPrice && (
-              <p className="text-xs font-bold text-ink-mute line-through">{fmt(tire.oldPrice)}</p>
+              <p className="truncate text-xs font-bold text-ink-mute line-through">{fmt(tire.oldPrice)}</p>
             )}
-            <p className="text-xs font-bold text-ink-mute">{t('سعر الإطار الواحد')}</p>
+            <p className="hidden sm:block text-xs font-bold text-ink-mute">{t('سعر الإطار الواحد')}</p>
           </div>
           <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] sm:text-xs font-extrabold ${tire.stock === 'متوفر' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
             {t(tire.stock)}
@@ -141,13 +141,13 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
         </div>
 
         {outOfStock ? (
-          <div className="mt-3 rounded-xl bg-amber-50 p-3 text-center">
-            <p className="text-sm font-extrabold text-amber-800">{t('المنتج غير متوفر حاليًا')}</p>
+          <div className="mt-2 sm:mt-3 rounded-xl bg-amber-50 p-2 sm:p-3 text-center">
+            <p className="text-xs sm:text-sm font-extrabold text-amber-800">{t('المنتج غير متوفر حاليًا')}</p>
           </div>
         ) : (
-          <div className="mt-3 rounded-xl bg-muted/70 p-2 sm:p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1" role="group" aria-label="Tire quantity">
+          <div className="mt-2 sm:mt-3 rounded-xl bg-muted/70 p-2 sm:p-3">
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex flex-1 sm:flex-none items-center gap-1" role="group" aria-label="Tire quantity">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   disabled={qty <= 1}
@@ -156,7 +156,7 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="min-w-7 sm:min-w-10 text-center text-sm sm:text-base font-black text-ink">{num(qty)}</span>
+                <span className="flex-1 sm:flex-none sm:min-w-10 text-center text-sm sm:text-base font-black text-ink">{num(qty)}</span>
                 <button
                   onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
                   disabled={qty >= maxQty}
@@ -166,15 +166,19 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              <div className="text-end">
+              <div className="hidden sm:block text-end">
                 <p className="text-xs font-bold text-ink-mute">{num(tire.price)} × {num(qty)}</p>
-                <p className="text-base sm:text-lg font-black text-ink">{fmt(tire.price * qty)}</p>
+                <p className="text-lg font-black text-ink">{fmt(tire.price * qty)}</p>
               </div>
+            </div>
+            <div className="mt-1.5 flex items-baseline justify-between gap-1 sm:hidden">
+              <p className="truncate text-[10px] font-bold text-ink-mute">{num(tire.price)} × {num(qty)}</p>
+              <p className="whitespace-nowrap text-sm font-black text-ink">{fmt(tire.price * qty)}</p>
             </div>
           </div>
         )}
 
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2 sm:pt-3">
           {outOfStock ? (
             <NotifyMeButton productId={tire.productId} variationId={tire.variationId} />
           ) : (
@@ -182,7 +186,7 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
               onClick={() =>
                 add({ id: tire.id, title: isAr ? `إطار ${tire.brand} ${tire.model}` : `${tire.brand} ${tire.model} Tire`, subtitle: tire.size, price: tire.price, productId: tire.productId, variationId: tire.variationId }, qty)
               }
-              className="w-full rounded-xl bg-brand text-coal h-12 text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all"
+              className="w-full rounded-xl bg-brand text-coal h-11 sm:h-12 text-sm sm:text-base font-black border-2 border-coal shadow-[0_4px_0_#191919] hover:translate-y-[2px] hover:shadow-[0_2px_0_#191919] transition-all"
             >
               {t('أضف للسلة')}
             </button>

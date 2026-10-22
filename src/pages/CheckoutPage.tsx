@@ -8,7 +8,7 @@ import { useWhatsappUrl, waTextLink } from '@/hooks/use-social-media';
 import { useAuth } from '@/auth';
 import { useCart } from '@/cart';
 import { itemDisplay, useLang } from '@/i18n';
-import { useBranches } from '@/hooks/use-branches';
+import { useBusinessLocations } from '@/hooks/use-business-locations';
 import { usePaymentMethods } from '@/hooks/use-payment-methods';
 import { useEcomLoyalty } from '@/hooks/use-ecom-loyalty';
 import { useDeliveryAreas } from '@/hooks/use-delivery-areas';
@@ -16,7 +16,7 @@ import { useDeliveryCharge } from '@/hooks/use-delivery-fee';
 import { useOffers } from '@/hooks/use-offers';
 import { ecomOrdersKeys, useCreateEcomOrder } from '@/hooks/use-ecom-orders';
 import { useEcomPaymentStatus, usePayEcomOrder } from '@/hooks/use-order-payment';
-import { getEcomOrder } from '@/lib/api';
+import { getEcomOrder, locationDisplayName } from '@/lib/api';
 import { productPrice, useOfferProducts } from '@/hooks/use-apply-offer';
 import {
   decodePaymentToken,
@@ -222,10 +222,11 @@ export default function CheckoutPage() {
   const [gatewayReturn] = useState(readGatewayReturn);
 
   // ── API data ──
-  const branchesQuery = useBranches();
+  const branchesQuery = useBusinessLocations();
   const apiBranches = branchesQuery.data ?? [];
   const usingApiBranches = apiBranches.length > 0;
   const locationId = usingApiBranches && branchKey ? Number(branchKey) : undefined;
+  const selectedApiBranch = usingApiBranches ? apiBranches.find((b) => String(b.id) === branchKey) : undefined;
   const staticBranch = !usingApiBranches ? BRANCHES.find((b) => b.id === branchKey) : undefined;
 
   const isDelivery = mode === 'shipping';
@@ -714,7 +715,7 @@ export default function CheckoutPage() {
                       {usingApiBranches
                         ? apiBranches.map((b) => (
                             <SelectItem key={b.id} value={String(b.id)} className="font-bold">
-                              {b.name}{b.gov ? ` — ${t(b.gov)}` : ''}
+                              {locationDisplayName(b, isAr)}
                             </SelectItem>
                           ))
                         : BRANCHES.map((b) => (
@@ -722,11 +723,15 @@ export default function CheckoutPage() {
                           ))}
                     </SelectContent>
                   </Select>
-                  {staticBranch && (
+                  {selectedApiBranch?.address ? (
+                    <p className="mt-3 flex items-center gap-2 rounded-xl bg-muted/70 px-4 py-3 text-sm font-bold text-ink">
+                      <MapPin className="h-4 w-4 shrink-0 text-ink-mute" /> {selectedApiBranch.address}
+                    </p>
+                  ) : staticBranch ? (
                     <p className="mt-3 flex items-center gap-2 rounded-xl bg-muted/70 px-4 py-3 text-sm font-bold text-ink">
                       <MapPin className="h-4 w-4 shrink-0 text-ink-mute" /> {t(staticBranch.address)} • {t(staticBranch.hours)}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               )}
 

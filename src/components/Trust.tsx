@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ExternalLink, MapPin, Share2, ShieldCheck, Star, Timer, Wallet, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,6 +42,82 @@ export function WhyUs() {
   );
 }
 
+/**
+ * Auto-scrolling row that stays manually draggable/swipeable.
+ * Content must be duplicated by the caller — scroll resets at half-width for a seamless loop.
+ */
+function AutoScrollRow({ children, label }: { children: ReactNode; label: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const state = useRef({ dragging: false, hover: false, resumeAt: 0, startX: 0, startScroll: 0, moved: 0 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    let last = performance.now();
+    const step = (now: number) => {
+      const s = state.current;
+      const dt = Math.min(now - last, 50);
+      last = now;
+      if (!s.dragging && !s.hover && now >= s.resumeAt) {
+        el.scrollLeft += dt * 0.045;
+        const half = el.scrollWidth / 2;
+        if (half > 0 && el.scrollLeft >= half) el.scrollLeft -= half;
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const release = () => {
+    state.current.dragging = false;
+    state.current.resumeAt = performance.now() + 1500;
+  };
+
+  return (
+    <div
+      ref={ref}
+      dir="ltr"
+      role="region"
+      aria-label={label}
+      className="flex w-full items-center overflow-x-auto no-scrollbar select-none"
+      onMouseEnter={() => (state.current.hover = true)}
+      onMouseLeave={() => {
+        state.current.hover = false;
+        if (state.current.dragging) release();
+      }}
+      onPointerDown={(e) => {
+        const s = state.current;
+        s.dragging = true;
+        s.moved = 0;
+        s.startX = e.clientX;
+        s.startScroll = ref.current?.scrollLeft ?? 0;
+      }}
+      onPointerMove={(e) => {
+        const s = state.current;
+        if (!s.dragging || e.pointerType === 'touch') return;
+        s.moved = e.clientX - s.startX;
+        const el = ref.current;
+        if (el) el.scrollLeft = s.startScroll - s.moved;
+      }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onTouchStart={() => (state.current.dragging = true)}
+      onTouchEnd={release}
+      onDragStart={(e) => e.preventDefault()}
+      onClickCapture={(e) => {
+        if (Math.abs(state.current.moved) > 8) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function Brands() {
   const { data } = useEcomProducts({ business_id: 1, per_page: 100 });
 
@@ -62,44 +138,41 @@ export function Brands() {
     ? brands
     : BRAND_STRIP.map((name) => ({ name, id: undefined as number | undefined, photo: null as string | null }));
 
-  const chipBase =
-    'flex items-center justify-center whitespace-nowrap rounded-xl border-2 border-ink/10 bg-paper transition-colors hover:border-ink';
-  const chipCls = `${chipBase} gap-2.5 px-6 py-2.5 text-lg font-black uppercase tracking-widest text-ink/35 hover:text-ink`;
-  const logoChipCls = `${chipBase} px-4 py-2`;
-
   return (
     <section aria-label="الماركات المتاحة" className="bg-white border-y border-border overflow-hidden">
-      <div className="py-5">
-        <div className="flex w-max animate-marquee-rtl gap-4 px-6 items-center" dir="ltr">
+      <div className="py-4">
+        <AutoScrollRow label="الماركات المتاحة">
           {[...strip, ...strip].map((b, i) => {
-            const cls = b.photo ? logoChipCls : chipCls;
             const inner = b.photo ? (
               <img
                 src={b.photo}
                 alt={b.name}
                 title={b.name}
                 loading="lazy"
-                className="h-9 w-auto min-w-9 object-contain"
+                draggable={false}
+                className="h-10 sm:h-14 w-auto min-w-10 object-contain transition-transform hover:scale-110"
               />
             ) : (
-              b.name
+              <span className="whitespace-nowrap text-lg font-black uppercase tracking-widest text-ink/35">
+                {b.name}
+              </span>
             );
             return b.id ? (
               <Link
                 key={`${b.name}-${i}`}
                 to={`/products?business_id=1&device_brand_id=${b.id}&brand_name=${encodeURIComponent(b.name)}`}
-                className={cls}
                 aria-label={b.name}
+                className="shrink-0 me-10 sm:me-14"
               >
                 {inner}
               </Link>
             ) : (
-              <span key={`${b.name}-${i}`} className={cls}>
+              <span key={`${b.name}-${i}`} className="shrink-0 me-10 sm:me-14">
                 {inner}
               </span>
             );
           })}
-        </div>
+        </AutoScrollRow>
       </div>
     </section>
   );
@@ -118,23 +191,30 @@ export function PaymentMethodsStrip() {
         <p className="text-center text-sm font-extrabold uppercase tracking-[0.2em] text-ink-mute">
           {t('طرق الدفع المتاحة')}
         </p>
-        <div className="mt-5 flex w-max animate-marquee-rtl gap-4 px-6 items-center" dir="ltr">
-          {[...methods, ...methods].map((m, i) => (
-            <span
-              key={`${m.id}-${i}`}
-              className="flex items-center gap-2.5 whitespace-nowrap rounded-xl border-2 border-ink/10 bg-white px-5 py-2.5 text-base font-black text-ink"
-            >
-              {m.image && (
-                <img
-                  src={m.image}
-                  alt=""
-                  loading="lazy"
-                  className="h-8 w-8 shrink-0 rounded-lg object-contain"
-                />
-              )}
-              {isAr ? (m.name_ar ?? m.name_en ?? m.name) : (m.name_en ?? m.name_ar ?? m.name)}
-            </span>
-          ))}
+        <div className="mt-5">
+          <AutoScrollRow label={t('طرق الدفع المتاحة')}>
+            {[...methods, ...methods].map((m, i) => (
+              <span
+                key={`${m.id}-${i}`}
+                className="shrink-0 me-10 sm:me-14"
+                title={isAr ? (m.name_ar ?? m.name_en ?? m.name) : (m.name_en ?? m.name_ar ?? m.name)}
+              >
+                {m.image ? (
+                  <img
+                    src={m.image}
+                    alt={isAr ? (m.name_ar ?? m.name_en ?? m.name) : (m.name_en ?? m.name_ar ?? m.name)}
+                    loading="lazy"
+                    draggable={false}
+                    className="h-10 sm:h-14 w-auto min-w-10 object-contain transition-transform hover:scale-110"
+                  />
+                ) : (
+                  <span className="whitespace-nowrap text-lg font-black uppercase tracking-widest text-ink/35">
+                    {isAr ? (m.name_ar ?? m.name_en ?? m.name) : (m.name_en ?? m.name_ar ?? m.name)}
+                  </span>
+                )}
+              </span>
+            ))}
+          </AutoScrollRow>
         </div>
       </div>
     </section>
