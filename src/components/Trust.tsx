@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
+import useEmblaCarousel from 'embla-carousel-react';
+import AutoScroll from 'embla-carousel-auto-scroll';
 import { ExternalLink, MapPin, Share2, ShieldCheck, Star, Timer, Wallet, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,77 +45,17 @@ export function WhyUs() {
 }
 
 /**
- * Auto-scrolling row that stays manually draggable/swipeable.
- * Content must be duplicated by the caller — scroll resets at half-width for a seamless loop.
+ * Continuously auto-scrolling row (embla + AutoScroll plugin).
+ * Free-drag works on touch & mouse; auto-scroll pauses on hover and resumes after interaction.
  */
 function AutoScrollRow({ children, label }: { children: ReactNode; label: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const state = useRef({ dragging: false, hover: false, resumeAt: 0, startX: 0, startScroll: 0, moved: 0 });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let raf = 0;
-    let last = performance.now();
-    const step = (now: number) => {
-      const s = state.current;
-      const dt = Math.min(now - last, 50);
-      last = now;
-      if (!s.dragging && !s.hover && now >= s.resumeAt) {
-        el.scrollLeft += dt * 0.045;
-        const half = el.scrollWidth / 2;
-        if (half > 0 && el.scrollLeft >= half) el.scrollLeft -= half;
-      }
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  const release = () => {
-    state.current.dragging = false;
-    state.current.resumeAt = performance.now() + 1500;
-  };
-
+  const [ref] = useEmblaCarousel(
+    { loop: true, dragFree: true, direction: 'ltr', startIndex: 0 },
+    [AutoScroll({ speed: 1, startDelay: 400, stopOnInteraction: false, stopOnMouseEnter: true })],
+  );
   return (
-    <div
-      ref={ref}
-      dir="ltr"
-      role="region"
-      aria-label={label}
-      className="flex w-full items-center overflow-x-auto no-scrollbar select-none"
-      onMouseEnter={() => (state.current.hover = true)}
-      onMouseLeave={() => {
-        state.current.hover = false;
-        if (state.current.dragging) release();
-      }}
-      onPointerDown={(e) => {
-        const s = state.current;
-        s.dragging = true;
-        s.moved = 0;
-        s.startX = e.clientX;
-        s.startScroll = ref.current?.scrollLeft ?? 0;
-      }}
-      onPointerMove={(e) => {
-        const s = state.current;
-        if (!s.dragging || e.pointerType === 'touch') return;
-        s.moved = e.clientX - s.startX;
-        const el = ref.current;
-        if (el) el.scrollLeft = s.startScroll - s.moved;
-      }}
-      onPointerUp={release}
-      onPointerCancel={release}
-      onTouchStart={() => (state.current.dragging = true)}
-      onTouchEnd={release}
-      onDragStart={(e) => e.preventDefault()}
-      onClickCapture={(e) => {
-        if (Math.abs(state.current.moved) > 8) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }}
-    >
-      {children}
+    <div ref={ref} dir="ltr" role="region" aria-label={label} className="overflow-hidden cursor-grab active:cursor-grabbing">
+      <div className="flex items-center">{children}</div>
     </div>
   );
 }

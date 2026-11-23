@@ -90,6 +90,9 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
             {t(tire.badge)}
           </span>
         )}
+        <span className={`absolute z-10 top-2 end-2 sm:top-3 sm:end-3 rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-extrabold ${tire.stock === 'متوفر' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+          {t(tire.stock)}
+        </span>
         <ProductImage
           images={tire.images?.length ? tire.images : tire.image ? [tire.image] : []}
           alt={`${tire.brand} ${tire.model} tire`}
@@ -127,17 +130,12 @@ export function TireCard({ tire, detailBase }: { tire: Tire; detailBase?: string
           {t('المقاس:')} <span className="ltr font-extrabold text-ink">{tire.size}</span>
         </p>
 
-        <div className="mt-2 sm:mt-3 flex items-end justify-between gap-1">
-          <div className="min-w-0">
-            <p className="whitespace-nowrap text-base sm:text-2xl font-black text-ink">{num(tire.price)} <span className="text-[10px] sm:text-sm">{t('جنيه')}</span></p>
-            {!!tire.oldPrice && (
-              <p className="truncate text-xs font-bold text-ink-mute line-through">{fmt(tire.oldPrice)}</p>
-            )}
-            <p className="hidden sm:block text-xs font-bold text-ink-mute">{t('سعر الإطار الواحد')}</p>
-          </div>
-          <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] sm:text-xs font-extrabold ${tire.stock === 'متوفر' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-            {t(tire.stock)}
-          </span>
+        <div className="mt-2 sm:mt-3 min-w-0">
+          <p className="whitespace-nowrap text-base sm:text-2xl font-black text-ink">{num(tire.price)} <span className="text-[10px] sm:text-sm">{t('جنيه')}</span></p>
+          {!!tire.oldPrice && (
+            <p className="truncate text-xs font-bold text-ink-mute line-through">{fmt(tire.oldPrice)}</p>
+          )}
+          <p className="hidden sm:block text-xs font-bold text-ink-mute">{t('سعر الإطار الواحد')}</p>
         </div>
 
         {outOfStock ? (
