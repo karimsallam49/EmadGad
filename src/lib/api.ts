@@ -685,7 +685,13 @@ export async function createPickup(body: DTO.PickupRequestModel) {
 // ==================== CMS ====================
 
 export async function getAboutUs() {
-  return api.get<DTO.AboutUsModel>(ENDPOINTS.aboutUs);
+  const res = await api.get<DTO.AboutUsModel>(ENDPOINTS.aboutUs);
+  const raw = res as unknown as DTO.AboutUsModel;
+  return {
+    en: raw.about_us?.trim() || '',
+    ar: raw.aboutus_ar?.trim() || '',
+    raw,
+  };
 }
 
 /** GET connector/api/legal-pages/{slug} — public; `data` is an array with one element (or empty) */

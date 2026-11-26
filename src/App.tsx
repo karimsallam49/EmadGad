@@ -37,6 +37,7 @@ const TaxonomyPage = lazy(() => import('@/pages/TaxonomyPage'));
 const BlogListPage = lazy(() => import('@/pages/BlogListPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 const LegalPage = lazy(() => import('@/pages/LegalPage'));
+const AboutPage = lazy(() => import('@/pages/AboutPage'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -103,6 +104,7 @@ export default function App() {
                   <Route path="/terms" element={<LegalPage doc="terms" />} />
                   <Route path="/cancellation-policy" element={<LegalPage doc="cancellation" />} />
                   <Route path="/privacy-policy" element={<LegalPage doc="privacy" />} />
+                  <Route path="/about" element={<AboutPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />

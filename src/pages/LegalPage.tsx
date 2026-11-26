@@ -43,7 +43,7 @@ function parseContent(text: string): Block[] {
   return blocks;
 }
 
-function ContentBlocks({ text }: { text: string }) {
+export function ContentBlocks({ text }: { text: string }) {
   return (
     <div className="mt-8 space-y-4 rounded-2xl border-2 border-border bg-white p-6">
       {parseContent(text).map((b, i) =>

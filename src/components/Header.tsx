@@ -21,6 +21,7 @@ const NAV = [
 ];
 
 const LEGAL_NAV = [
+  { label: 'من نحن', to: '/about' },
   { label: 'سياسة الاسترجاع', to: '/return-policy' },
   { label: 'الشروط والأحكام', to: '/terms' },
   { label: 'سياسة الإلغاء', to: '/cancellation-policy' },

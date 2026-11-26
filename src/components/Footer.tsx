@@ -6,14 +6,20 @@ import { useSocialMedia, useWhatsappUrl, waTextLink } from '@/hooks/use-social-m
 import { useLang } from '@/i18n';
 import { WhatsAppIcon } from './art';
 
-/** Official App Store + Google Play badges (store links to be added when apps launch) */
+/** Official App Store + Google Play badges */
 export function StoreBadges({ className = 'h-10' }: { className?: string }) {
   const { t } = useLang();
   return (
     <div className="flex items-center gap-3" dir="ltr">
-      <span className="inline-flex rounded-lg overflow-hidden ring-1 ring-white/15 cursor-pointer hover:opacity-90 transition-opacity" title={t('تطبيق iOS')}>
+      <a
+        href="https://apps.apple.com/eg/app/emad-gad-auto-%D8%B9%D9%85%D8%A7%D8%AF-%D8%AC%D8%A7%D8%AF-%D8%A7%D9%88%D8%AA%D9%88/id6818106330"
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex rounded-lg overflow-hidden ring-1 ring-white/15 hover:opacity-90 transition-opacity"
+        title={t('تطبيق iOS')}
+      >
         <img src="/assets/appstore.svg" alt="Download on the App Store" width={120} height={40} loading="lazy" className={`${className} w-auto`} />
-      </span>
+      </a>
       <a
         href="https://play.google.com/store/apps/details?id=com.emadgad.com&hl=ar"
         target="_blank"
@@ -69,7 +75,7 @@ export default function Footer() {
     .slice(0, 6);
 
   const COLS: { title: string; links: { l: string; to?: string; h?: string }[] }[] = [
-    { title: 'EmadGad', links: [{ l: t('من نحن'), to: '/#why' }, { l: t('فروعنا'), to: '/branches' }, { l: t('تواصل معنا'), h: whatsappUrl }] },
+    { title: 'EmadGad', links: [{ l: t('من نحن'), to: '/about' }, { l: t('فروعنا'), to: '/branches' }, { l: t('تواصل معنا'), h: whatsappUrl }] },
     { title: t('المنتجات'), links: [{ l: t('الإطارات'), to: '/tires' }, { l: t('البطاريات'), to: '/batteries' }, { l: t('العروض'), to: '/offers' }] },
     {
       title: t('فروعنا'),

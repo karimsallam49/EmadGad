@@ -326,8 +326,19 @@ export interface BranchModel {
 
 // ==================== About Us Models ====================
 
+/** GET connector/api/about-us — bilingual about + all legal page bodies in one payload */
 export interface AboutUsModel {
-  aboutUs: string;
+  success?: boolean;
+  about_us?: string | null;          // EN content
+  aboutus_ar?: string | null;        // AR content
+  terms_and_conditions_ar?: string | null;
+  terms_and_conditions_en?: string | null;
+  return_policy_ar?: string | null;
+  return_policy_en?: string | null;
+  cancellation_policy_ar?: string | null;
+  cancellation_policy_en?: string | null;
+  privacy_policy_ar?: string | null;
+  privacy_policy_en?: string | null;
 }
 
 // ==================== Blog Models ====================
